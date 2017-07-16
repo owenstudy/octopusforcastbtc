@@ -13,6 +13,10 @@ class CommonFunction(object):
     def get_curr_time(cls):
         currtime = time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(time.time()))
         return currtime
+    # 字符串转换成日期类型
+    @classmethod
+    def strtotime(cls, datestr):
+        return datetime.datetime.strptime(datestr,'%Y-%m-%d %H:%M:%S')
     #日期时间对象
     @classmethod
     def get_curr_date(cls):
@@ -22,3 +26,6 @@ class CommonFunction(object):
 #test
 if __name__=='__main__':
     print(CommonFunction.get_curr_time())
+    x='2017-07-16 08:19:46'
+    datex=CommonFunction.strtotime(x)
+    print(type(datex))

@@ -30,28 +30,48 @@ class PriceItem(object):
         self.price_buy_forecast=None
         # 实际价格结果
         self.price_buy_forecast_verify=None
+    '''打印显示对象的内容'''
+    def __str__(self):
+        priceinfo='|%s|%s|%s|%s|%s|%s|%s|%s|%s'%(common.CommonFunction.get_curr_time().rjust(25),self.coin.rjust(6),\
+                str(self.buy_price).rjust(10),str(self.buy_depth).rjust(20),str(self.sell_price).rjust(10),\
+                str(self.sell_depth).rjust(20),str(self.price_buy_index).rjust(4),\
+                str(self.price_buy_forecast).rjust(8),str(self.price_buy_forecast_verify).rjust(12))
+        return priceinfo
 
 
 '''保持一段时间内的价格列表，只保存最近一段时间，如一小时内的价格进行判断'''
 class PriceBuffer(object):
-    def __init__(self,priceitem=None):
+    def __init__(self,priceitem=None, save_log_flag=True):
         self.price_buffer=[]
         # 初始化常用的常量值
         self.__initconst()
 
         # 设置影响判断条件的公共参数
         # 上升趋势时，价格深度比较强的百分比
-        self.__PRICE_TREND_STRONG_PERCENTAGE=1.5
+        #self.__PRICE_TREND_STRONG_PERCENTAGE=1.5
         # 买入趋势比较弱的百分比
-        self.__PRICE_TREND_WEAK_PERCENTAGE=0.6
+        #self.__PRICE_TREND_WEAK_PERCENTAGE=0.6
         # 买入指数判断的时间范围，初始为按1小时内的价格进行判断,单位为秒
-        self.__PRICE_TREND_RANGE=3600
+        #self.__PRICE_TREND_RANGE=3600
         # 价格buffer中保存的最大的价格记录数
-        self.__PRICE_BUFF_MAX=1000
+        self.__PRICE_BUFF_MAX=2000
+        # 止盈卖出的比例，用来确认预测买入的是不是符合要求
+        self.sell_profit_rate = 0.012
+        #
+
+        # 买入的标准指数
+        # self.__BUY_INDEX_STANDARD=1.2
+
+        # 调整公共参数, 设置默认的参数
+        self.adjust_params(1.2, 1.5, 0.6, 3600)
+        # 是否需要写log, 在进行研究的时候不需要写LOG
+        self.save_log_flag = save_log_flag
+
+        # 测试基准时间，用于从文件读取时设置一个基准时间进行循环测试
+        self.basetime=None
 
         if priceitem!=None:
             # 把处理好的价格加入到价格BUFFER列表
-            # self.price_buffer.append(priceitem)
             self.newprice(priceitem)
 
     # 设置常用常量列表
@@ -73,7 +93,12 @@ class PriceBuffer(object):
         const.PRICE_TREND_SELL_NORMAL='S'       # 建议卖出，趋势不明显
         const.PRICE_TREND_SELL_REJECTED='RS'    # 不建议卖出，目前买入趋势非常的明显
 
-
+    # 调整一些公共参数，通过测试来得到最佳的参数
+    def adjust_params(self, buy_index_standard=1.2, price_trend_strong_rate=1.5, price_trend_weak_rate=0.6, price_trend_range=3600):
+        self.__PRICE_TREND_STRONG_PERCENTAGE = price_trend_strong_rate
+        self.__PRICE_TREND_WEAK_PERCENTAGE = price_trend_weak_rate
+        self.__PRICE_TREND_RANGE = price_trend_range
+        self.__BUY_INDEX_STANDARD=buy_index_standard
     '''增加新的价格列表'''
     def newprice(self,priceitem):
         # 初始化新价格的上升下降趋势和买入卖出建议
@@ -100,16 +125,17 @@ class PriceBuffer(object):
     def __save_price(self):
         if len(self.price_buffer)==1:
             # 第一条价格记录增加TITLE
-            titlestr='Price date:'.rjust(25) + ('Coin'.rjust(6)) + ('|buyPrice').rjust(10) + ('|buyDepth').rjust(10)
+            titlestr='|Price date|'.rjust(25) + ('Coin'.rjust(6)) + ('|buyPrice').rjust(10) + ('|buyDepth').rjust(10)
             titlestr=titlestr + ('|sellPrice').rjust(10) + ('|sellDepth').rjust(10) + ('|buyIndex').rjust(4) + ('|buyIndi').rjust(8)
             titlestr=titlestr + ('|buyVerifyIndi').rjust(12)
             #logging.info(titlestr)
         priceitem=self.price_buffer[len(self.price_buffer)-2]
-        priceinfo='%s:%s|%s|%s|%s|%s|%s|%s|%s'%(common.CommonFunction.get_curr_time().rjust(25),priceitem.coin.rjust(6),\
+        priceinfo='|%s|%s|%s|%s|%s|%s|%s|%s|%s'%(common.CommonFunction.get_curr_time().rjust(25),priceitem.coin.rjust(6),\
                 str(priceitem.buy_price).rjust(10),str(priceitem.buy_depth).rjust(20),str(priceitem.sell_price).rjust(10),\
                 str(priceitem.sell_depth).rjust(20),str(priceitem.price_buy_index).rjust(4),\
                 str(priceitem.price_buy_forecast).rjust(8),str(priceitem.price_buy_forecast_verify).rjust(12))
-        logging.info(priceinfo)
+        if self.save_log_flag is True:
+            logging.info(priceinfo)
 
     '''得到上升还是下降的趋势'''
     # 价格趋势，每次价格进入后都进行比较前一次得出结论，1上升，0持平，-1,下降
@@ -170,7 +196,7 @@ class PriceBuffer(object):
 
             # 根据权重进行判断买入卖出趋势
             total_weight=buy_weight+sell_weight
-            print('总共的买入卖出权重:%d'%total_weight)
+            # print('总共的买入卖出权重:%d'%total_weight)
             if total_weight>2:
                 newpriceitem.price_trend_buy = const.PRICE_TREND_BUY_STRONG
                 newpriceitem.price_trend_sell = const.PRICE_TREND_SELL_REJECTED
@@ -189,8 +215,11 @@ class PriceBuffer(object):
         # 没有价格时返回指数为0
         if len(self.price_buffer)==0:
             return 0
-
-        endtime=datetime.datetime.now()
+        if self.basetime==None:
+            endtime=datetime.datetime.now()
+        else:
+            endtime=self.basetime
+            # endtime=common.CommonFunction.strtotime('2017-07-16 01:08:19')
         starttime=endtime-datetime.timedelta(seconds=duration)
         # 在指定时间内所有价格的买入趋势占总体的比例,0~2之间的数字
         total_buy_times=0
@@ -211,12 +240,23 @@ class PriceBuffer(object):
     # 买入预估结果，True 买入，False不买入
     def buyforecast(self,buy_index):
         # TODO 可能需要加入更多的逻辑来判断是否买入
-        if buy_index>=1.5:
+        if buy_index>= self.__BUY_INDEX_STANDARD:
             return True
         else:
             return False
+    '''实际买入的记录是不是符合预期的结果'''
+    def buyforecast_verify(self, newpriceitem):
+        if len(self.price_buffer)==0:
+            newpriceitem.price_buy_forecast_verify = False
+            return
+        # 判断当前之前一段时间的预测买入是不是达到了卖出条件，如果达到说明预期结果正确
+        endtime = newpriceitem.pricedate
+        starttime = endtime-datetime.timedelta(seconds=self.__PRICE_TREND_RANGE)
+        
+        pass
+
     # 实际是否买入更新，根据新的实际价格得到是不是要买入，更新实际的情况，作为对预判的检查
-    def buyforecast_verify(self,newpriceitem):
+    def buyforecast_verifyX(self,newpriceitem):
 
         if len(self.price_buffer)==0:
             newpriceitem.price_buy_forecast_verify = False
@@ -249,6 +289,7 @@ class PriceBuffer(object):
         sell_depth=round(sell_depth,2)
         priceitem=PriceItem(datetime.datetime.now(),coin,buy_price,buy_depth,sell_price,sell_depth)
         return priceitem
+
 if __name__ == '__main__':
 
 
@@ -271,10 +312,16 @@ if __name__ == '__main__':
     runtime=0
     maxruntime=10000
     while(runtime<maxruntime):
-        time.sleep(15)
-        newprice=pricebuffer.getpriceitem('btc38','doge_cny')
-        pricebuffer.newprice(newprice)
-        runtime=runtime+1
+        time.sleep(5)
+        try:
+            runtime = runtime + 1
+            pricebuffer.adjust_params(0.8,1.7,0.7,3600)
+            newpriceitem = pricebuffer.getpriceitem('btc38', 'doge_cny')
+            pricebuffer.newprice(newpriceitem)
+            print(pricebuffer.price_buffer[len(pricebuffer.price_buffer)-2])
+        except:
+            pass
+
 
     pricebuffer.pricetrend(price2,pricebuffer.price_buffer)
     pricebuffer.pricetrend_depth(price2,pricebuffer.price_buffer)
