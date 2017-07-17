@@ -218,8 +218,8 @@ class PriceBuffer(object):
         if self.basetime==None:
             endtime=datetime.datetime.now()
         else:
-            endtime=self.basetime
-            # endtime=common.CommonFunction.strtotime('2017-07-16 01:08:19')
+            # endtime=self.basetime
+            endtime=common.CommonFunction.strtotime('2017-07-17 13:53:27')
         starttime=endtime-datetime.timedelta(seconds=duration)
         # 在指定时间内所有价格的买入趋势占总体的比例,0~2之间的数字
         total_buy_times=0
@@ -252,6 +252,18 @@ class PriceBuffer(object):
         # 判断当前之前一段时间的预测买入是不是达到了卖出条件，如果达到说明预期结果正确
         endtime = newpriceitem.pricedate
         starttime = endtime-datetime.timedelta(seconds=self.__PRICE_TREND_RANGE)
+        for priceitem in self.price_buffer:
+            if priceitem.pricedate>starttime and priceitem.pricedate< endtime:
+                # 已经预测过且得到验证的则不需要再继续进行
+                if priceitem.price_buy_forecast_verify is True or priceitem.price_buy_forecast is False:
+                    continue
+                actual_profit_rate=(newpriceitem.sell_price-priceitem.buy_price)/priceitem.buy_price
+                # 达到卖出条件则认为预测成功
+                if actual_profit_rate>self.sell_profit_rate:
+                    priceitem.price_buy_forecast_verify=True
+                else:
+                    priceitem.price_buy_forecast_verify=False
+
         
         pass
 

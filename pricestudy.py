@@ -19,7 +19,7 @@ class PriceStudy(object):
         testresult = self.simulate_verify_price()
 
         for resultitem in testresult:
-            if float(resultitem.get('verify_correct_rate'))>0.2:
+            if float(resultitem.get('verify_correct_rate'))>=0:
                 print(resultitem)
 
 
