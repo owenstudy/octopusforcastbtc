@@ -6,7 +6,7 @@ __author__ = 'Owen_Study/owen_study@126.com'
 
 from priceupdate import PriceItem,PriceBuffer
 import common
-'''从价格文件中读取价格信息，进行对比研究，确定参数'''
+'''从价格文件中读取价格信息，进行对比 研究，确定参数'''
 
 class PriceStudy(object):
     def __init__(self,pricefilename = None):
@@ -20,6 +20,7 @@ class PriceStudy(object):
 
         for resultitem in testresult:
             if float(resultitem.get('verify_correct_rate'))>=0:
+                pass
                 print(resultitem)
 
 
@@ -56,7 +57,7 @@ class PriceStudy(object):
                 for buy_index in range(5, 20):
                     testbuffer1 = PriceBuffer(save_log_flag=False)
                     testbuffer1.adjust_params(buy_index/10, price_trend_strong/10, price_trend_weak/10)
-                    #testbuffer1.basetime=common.CommonFunction.strtotime('2017-07-16 01:08:19')
+                    testbuffer1.basetime=common.CommonFunction.strtotime('2017-07-16 23:08:31')
                     # 对价格列表用新的参数进行模拟
                     for priceitem in basepricebuffer.price_buffer:
                         testbuffer1.newprice(priceitem)
@@ -64,6 +65,9 @@ class PriceStudy(object):
                     forecast_correct_rate = self.get_verify_rate(testbuffer1)
                     each_test_result={'price_trend_strong_percentage': price_trend_strong/10, 'price_trend_weak_percentage': price_trend_weak/10,\
                                       'buy_index':buy_index/10, 'verify_correct_rate':forecast_correct_rate}
+                    if forecast_correct_rate>0:
+                        pass
+                        # print(each_test_result)
                     testresult.append(each_test_result)
         return testresult
     '''统计测试数据中验证通过的记录比例'''

@@ -22,6 +22,10 @@ class CommonFunction(object):
     def get_curr_date(cls):
         now=datetime.datetime.now()
         return now
+    @classmethod
+    #     日期转换成指定的字符串
+    def datetimetostr(cls,dtime):
+        return dtime.strftime('%Y-%m-%d %H:%M:%S')
 
 #test
 if __name__=='__main__':

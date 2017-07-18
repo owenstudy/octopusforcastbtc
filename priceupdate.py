@@ -4,7 +4,7 @@
 __author__ = 'Owen_Study/owen_study@126.com'
 # Create date: 2017-07-13 1:34 AM
 import logging;logging.basicConfig(level=logging.INFO,filename='pricehistory.log')
-import datetime,time
+import datetime,time, operator
 import const,common
 import ordermanage
 
@@ -30,6 +30,8 @@ class PriceItem(object):
         self.price_buy_forecast=None
         # 实际价格结果
         self.price_buy_forecast_verify=None
+        # 实际价格校验成立时间
+        self.price_buy_forecast_verify_date=None
     '''打印显示对象的内容'''
     def __str__(self):
         priceinfo='|%s|%s|%s|%s|%s|%s|%s|%s|%s'%(common.CommonFunction.get_curr_time().rjust(25),self.coin.rjust(6),\
@@ -42,7 +44,10 @@ class PriceItem(object):
 '''保持一段时间内的价格列表，只保存最近一段时间，如一小时内的价格进行判断'''
 class PriceBuffer(object):
     def __init__(self,priceitem=None, save_log_flag=True):
+        # 保存执行过的价格列表
         self.price_buffer=[]
+        # 保存那些预测为买入的记录
+        self.price_forecast_list=[]
         # 初始化常用的常量值
         self.__initconst()
 
@@ -56,14 +61,14 @@ class PriceBuffer(object):
         # 价格buffer中保存的最大的价格记录数
         self.__PRICE_BUFF_MAX=2000
         # 止盈卖出的比例，用来确认预测买入的是不是符合要求
-        self.sell_profit_rate = 0.012
+        self.sell_profit_rate = 0.009
         #
 
         # 买入的标准指数
         # self.__BUY_INDEX_STANDARD=1.2
 
         # 调整公共参数, 设置默认的参数
-        self.adjust_params(1.2, 1.5, 0.6, 3600)
+        self.adjust_params(0.8, 0.6, 0.7, 3600)
         # 是否需要写log, 在进行研究的时候不需要写LOG
         self.save_log_flag = save_log_flag
 
@@ -109,12 +114,15 @@ class PriceBuffer(object):
         priceitem.price_buy_index=buy_index
         # 是否进行买入的预判
         priceitem.price_buy_forecast=self.buyforecast(buy_index)
+        # 对于需要买入的价格保存到买入列表
+        if priceitem.price_buy_forecast is True:
+            self.price_forecast_list.append(priceitem)
         # 对最近一次的价格进行校验，判断最后一次的价格的预测买入是不是正确
         self.buyforecast_verify(priceitem)
         # 把最新的价格加入BUFFER列表中
         self.price_buffer.append(priceitem)
         # 每次把验证过后的价格保存到文件中供以后参考
-        self.__save_price()
+        self.__save_price(priceitem)
         # TODO 需要增加逻辑来保证只保存最近一段时间的数据
         if len(self.price_buffer)>self.__PRICE_BUFF_MAX:
             # 移除最早的价格
@@ -122,20 +130,22 @@ class PriceBuffer(object):
 
 
     '''保存每次新增加的价格到LOG表中'''
-    def __save_price(self):
+    def __save_price(self,priceitem):
         if len(self.price_buffer)==1:
             # 第一条价格记录增加TITLE
             titlestr='|Price date|'.rjust(25) + ('Coin'.rjust(6)) + ('|buyPrice').rjust(10) + ('|buyDepth').rjust(10)
             titlestr=titlestr + ('|sellPrice').rjust(10) + ('|sellDepth').rjust(10) + ('|buyIndex').rjust(4) + ('|buyIndi').rjust(8)
             titlestr=titlestr + ('|buyVerifyIndi').rjust(12)
             #logging.info(titlestr)
-        priceitem=self.price_buffer[len(self.price_buffer)-2]
-        priceinfo='|%s|%s|%s|%s|%s|%s|%s|%s|%s'%(common.CommonFunction.get_curr_time().rjust(25),priceitem.coin.rjust(6),\
+        # priceitem=self.price_buffer[len(self.price_buffer)-2]
+        pricetimestr=common.CommonFunction.datetimetostr(priceitem.pricedate).rjust(25)
+        priceinfo='|%s|%s|%s|%s|%s|%s|%s|%s|%s'%(pricetimestr,priceitem.coin.rjust(6),\
                 str(priceitem.buy_price).rjust(10),str(priceitem.buy_depth).rjust(20),str(priceitem.sell_price).rjust(10),\
                 str(priceitem.sell_depth).rjust(20),str(priceitem.price_buy_index).rjust(4),\
                 str(priceitem.price_buy_forecast).rjust(8),str(priceitem.price_buy_forecast_verify).rjust(12))
         if self.save_log_flag is True:
             logging.info(priceinfo)
+        return priceinfo
 
     '''得到上升还是下降的趋势'''
     # 价格趋势，每次价格进入后都进行比较前一次得出结论，1上升，0持平，-1,下降
@@ -218,8 +228,8 @@ class PriceBuffer(object):
         if self.basetime==None:
             endtime=datetime.datetime.now()
         else:
-            # endtime=self.basetime
-            endtime=common.CommonFunction.strtotime('2017-07-17 13:53:27')
+            endtime=self.basetime
+            # endtime=common.CommonFunction.strtotime('2017-07-16 23:08:31')
         starttime=endtime-datetime.timedelta(seconds=duration)
         # 在指定时间内所有价格的买入趋势占总体的比例,0~2之间的数字
         total_buy_times=0
@@ -253,14 +263,18 @@ class PriceBuffer(object):
         endtime = newpriceitem.pricedate
         starttime = endtime-datetime.timedelta(seconds=self.__PRICE_TREND_RANGE)
         for priceitem in self.price_buffer:
-            if priceitem.pricedate>starttime and priceitem.pricedate< endtime:
+            if priceitem.pricedate>starttime and priceitem.pricedate< endtime and priceitem.coin==newpriceitem.coin:
                 # 已经预测过且得到验证的则不需要再继续进行
                 if priceitem.price_buy_forecast_verify is True or priceitem.price_buy_forecast is False:
                     continue
-                actual_profit_rate=(newpriceitem.sell_price-priceitem.buy_price)/priceitem.buy_price
+                actual_profit_rate=(newpriceitem.buy_price-priceitem.buy_price)/priceitem.buy_price
                 # 达到卖出条件则认为预测成功
                 if actual_profit_rate>self.sell_profit_rate:
                     priceitem.price_buy_forecast_verify=True
+                    priceitem.price_buy_forecast_verify_date=common.CommonFunction.get_curr_date()
+                    print('reverify result is correct: @%f'% newpriceitem.sell_price)
+                    priceinfo = self.__save_price(priceitem)
+                    print(priceinfo+'-->Done@%s'%common.CommonFunction.get_curr_time())
                 else:
                     priceitem.price_buy_forecast_verify=False
 
@@ -282,6 +296,7 @@ class PriceBuffer(object):
             last_price_item.price_buy_forecast_verify = True
         else:
             last_price_item.price_buy_forecast_verify = False
+
     '''从市场取得价格，返回一个价格明细'''
     def getpriceitem(self,market,coin_pair):
         order_market=ordermanage.OrderManage(market)
@@ -302,41 +317,141 @@ class PriceBuffer(object):
         priceitem=PriceItem(datetime.datetime.now(),coin,buy_price,buy_depth,sell_price,sell_depth)
         return priceitem
 
+'''监控价格的运行'''
+class MonitorPrice(object):
+    def __init__(self):
+        # 控制的price buffer list
+        self.__pricebuffer_list = {}
+        pass
+
+    '''对某一个币种进行监听测试'''
+    def monitor_coin(self,market, coin_pair):
+        coinpricebuffer=self.__pricebuffer_list.get(coin_pair)
+        # 如果COIN对应的price buffer不存在，则创建一个新的对象
+        if coinpricebuffer==None:
+            coinpricebuffer=PriceBuffer()
+            self.__pricebuffer_list[coin_pair]=coinpricebuffer
+
+        try:
+            coinpricebuffer.adjust_params(0.95,1.2,0.7,3600)
+            newpriceitem = coinpricebuffer.getpriceitem(market, coin_pair)
+            coinpricebuffer.newprice(newpriceitem)
+            lastpriceitem = coinpricebuffer.price_buffer[len(coinpricebuffer.price_buffer)-2]
+            if lastpriceitem.price_buy_forecast is True:
+                # print(coinpricebuffer.price_buffer[len(coinpricebuffer.price_buffer)-2])
+                pass
+        except Exception as e:
+            print(str(e))
+        pass
+    '''监控一个COIN列表'''
+    def monitor_coin_list(self,market, coin_list):
+
+        runtime = 0
+        maxruntime = 1000
+        while (runtime<maxruntime):
+            time.sleep(5)
+            for coin_pair in coin_list:
+                self.monitor_coin(market, coin_pair)
+                runtime = runtime + 1
+                if runtime % 100 == 0:
+                    print('Run %d' % runtime)
+                    forecast_list = self.__pricebuffer_list.get(coin_pair).price_forecast_list
+                    verified_count = 0
+                    for forecast_item in forecast_list:
+                        if forecast_item.price_buy_forecast_verify is True:
+                            verified_count = verified_count + 1
+                    if len(forecast_list) > 0:
+                        print('%s: verified:%d, total:%d for coin:%s'\
+                              %(common.CommonFunction.get_curr_time(), verified_count, len(forecast_list), coin_pair))
+        sorted_forecast_list = self.output_forecast_list(market, coin_list)
+        return sorted_forecast_list
+        pass
+
+    '''排序输出推荐买入列表的总体情况'''
+    def output_forecast_list(self, market, coin_list):
+        unsorted_forecast_list=[]
+        for coin_pair in coin_list:
+            self.monitor_coin(market, coin_pair)
+            forecast_list = self.__pricebuffer_list.get(coin_pair).price_forecast_list
+            verified_count = 0
+            for forecast_item in forecast_list:
+                if forecast_item.price_buy_forecast_verify is True:
+                    verified_count = verified_count + 1
+            unsorted_forecast_list.append({'coin':coin_pair, 'total':len(forecast_list), 'verified':verified_count, \
+                                         'rate': round(verified_count/len(forecast_list),2)})
+        # 对验证的结果进行排序，按验证率进行倒序
+        sorted_forecast_list= sorted(unsorted_forecast_list, key=operator.itemgetter('rate'), reverse=True)
+
+        print('---------------------final resut:--------------------')
+        for forecast_item in sorted_forecast_list:
+            print('%s: coin:%s, verified:%d, total:%d, rate:%f' \
+                  % (common.CommonFunction.get_curr_time(), forecast_item.get('coin'), \
+                     forecast_item.get('verified'), forecast_item.get('total'), forecast_item.get('rate') ))
+            pass
+        return sorted_forecast_list
+    '''测试一段时间内的最优的可用币种列表'''
+    def check_best_coin(self):
+
+        # 针对btc38市场进行全部COIN进行查找， TODO 需要进行一个更进一步的排序，同等比例的情况下数量优先
+        sorted_forecast_list = self.monitor_coin_list('btc38', ['doge_cny', 'btc_cny', 'ltc_cny', 'xrp_cny', 'eth_cny', 'etc_cny', \
+                                    'bts_cny', 'xlm_cny', 'nxt_cny', 'ardr_cny', 'blk_cny', 'xem_cny', \
+                                    'emc_cny', 'dash_cny', 'xzc_cny', 'sys_cny', 'vash_cny', 'ics_cny', \
+                                    'eac_cny', 'xcn_cny', 'ppc_cny', 'mgc_cny', 'hlb_cny', 'zcc_cny', \
+                                    'xpm_cny', 'ncs_cny', 'ybc_cny', 'anc_cny', 'bost_cny', 'mec_cny', \
+                                    'wdc_cny', 'qrk_cny', 'dgc_cny', 'bec_cny', 'ric_cny', 'src_cny', \
+                                    'tag_cny', 'med_cny', 'tmc_cny'])
+        return sorted_forecast_list
+
 if __name__ == '__main__':
 
+    # test monitor coin
+    monitor_coin=MonitorPrice()
+    x=monitor_coin.check_best_coin()
 
-    now1=datetime.datetime.now()
-    time.sleep(2)
-    now2=datetime.datetime.now()
-    print (now2-now1)
-    price1=PriceItem(now1,'doge',0.022,20000,0.024,30000)
-    price2=PriceItem(now2,'doge',0.025,35000,0.024,10000)
-    price3=PriceItem(now2,'doge',0.028,50000,0.024,4000)
-    price4=PriceItem(now2,'doge',0.030,50000,0.024,4000)
-    price5=PriceItem(now2,'doge',0.031,50000,0.024,4000)
-    price6=PriceItem(now2,'doge',0.032,50000,0.024,4000)
-    price7=PriceItem(now2,'doge',0.033,50000,0.024,4000)
+    # monitor_coin.monitor_coin_list('btc38',['doge_cny','btc_cny','ltc_cny', 'xrp_cny', 'eth_cny', 'etc_cny', \
+    #                                         'bts_cny', 'xlm_cny', 'nxt_cny', 'ardr_cny', 'blk_cny', 'xem_cny', \
+    #                                         'emc_cny', 'dash_cny', 'xzc_cny', 'sys_cny', 'vash_cny', 'ics_cny', \
+    #                                         'eac_cny', 'xcn_cny', 'ppc_cny', 'mgc_cny', 'hlb_cny', 'zcc_cny', \
+    #                                         'xpm_cny', 'ncs_cny', 'ybc_cny', 'anc_cny', 'bost_cny', 'mec_cny', \
+    #                                         'wdc_cny', 'qrk_cny', 'dgc_cny', 'bec_cny', 'ric_cny', 'src_cny', \
+    #                                         'tag_cny', 'med_cny', 'tmc_cny'])
 
-    order_market=ordermanage.OrderManage('btc38')
-    price_depth=order_market.getMarketDepth('doge_cny')
+    # now1=datetime.datetime.now()
+    # time.sleep(2)
+    # now2=datetime.datetime.now()
+    # # print (now2-now1)
+    # price1=PriceItem(now1,'doge',0.022,20000,0.024,30000)
+    # price2=PriceItem(now2,'doge',0.025,35000,0.024,10000)
+    # price3=PriceItem(now2,'doge',0.028,50000,0.024,4000)
+    # price4=PriceItem(now2,'doge',0.030,50000,0.024,4000)
+    # price5=PriceItem(now2,'doge',0.031,50000,0.024,4000)
+    # price6=PriceItem(now2,'doge',0.032,50000,0.024,4000)
+    # price7=PriceItem(now2,'doge',0.033,50000,0.024,4000)
+    #
+    # order_market=ordermanage.OrderManage('btc38')
+    # price_depth=order_market.getMarketDepth('doge_cny')
+    #
+    # pricebuffer=PriceBuffer()
+    #
+    # pricebuffer.monitor_coin_list('btc38',['doge_cny','btc_cny', 'ltc_cny'])
+    # runtime=0
+    # maxruntime=10000
+    # while(runtime<maxruntime):
+    #     time.sleep(5)
+    #     try:
+    #         runtime = runtime + 1
+    #         pricebuffer.adjust_params(0.8,1.7,0.7,3600)
+    #         newpriceitem = pricebuffer.getpriceitem('btc38', 'doge_cny')
+    #         pricebuffer.newprice(newpriceitem)
+    #         lastpriceitem = pricebuffer.price_buffer[len(pricebuffer.price_buffer)-2]
+    #         if lastpriceitem.price_buy_forecast is True:
+    #             print(pricebuffer.price_buffer[len(pricebuffer.price_buffer)-2])
+    #     except:
+    #         pass
 
-    pricebuffer=PriceBuffer()
-    runtime=0
-    maxruntime=10000
-    while(runtime<maxruntime):
-        time.sleep(5)
-        try:
-            runtime = runtime + 1
-            pricebuffer.adjust_params(0.8,1.7,0.7,3600)
-            newpriceitem = pricebuffer.getpriceitem('btc38', 'doge_cny')
-            pricebuffer.newprice(newpriceitem)
-            print(pricebuffer.price_buffer[len(pricebuffer.price_buffer)-2])
-        except:
-            pass
 
-
-    pricebuffer.pricetrend(price2,pricebuffer.price_buffer)
-    pricebuffer.pricetrend_depth(price2,pricebuffer.price_buffer)
+    # pricebuffer.pricetrend(price2,pricebuffer.price_buffer)
+    # pricebuffer.pricetrend_depth(price2,pricebuffer.price_buffer)
 
     #pricebuffer.newprice(price2)
     #pricebuffer.newprice(price3)
@@ -345,7 +460,7 @@ if __name__ == '__main__':
     #pricebuffer.newprice(price6)
     #pricebuffer.newprice(price7)
 
-    buy_index=pricebuffer.getbuyindex(5)
-    print('buy index:%s'%buy_index)
-    print(price2.price_trend_buy)
-    pass
+    # buy_index=pricebuffer.getbuyindex(5)
+    # print('buy index:%s'%buy_index)
+    # print(price2.price_trend_buy)
+    # pass
