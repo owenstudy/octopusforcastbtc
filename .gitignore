@@ -1,0 +1,7 @@
+*.xml
+*.log
+.DS_Store
+*.iml
+apikey
+
+__pycache__/
