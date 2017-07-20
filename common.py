@@ -27,6 +27,13 @@ class CommonFunction(object):
     def datetimetostr(cls,dtime):
         return dtime.strftime('%Y-%m-%d %H:%M:%S')
 
+
+# 字符串对象，用于打印目的
+def get_curr_time_str():
+    currtime = time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(time.time()))
+    return currtime
+
+
 #test
 if __name__=='__main__':
     print(CommonFunction.get_curr_time())
