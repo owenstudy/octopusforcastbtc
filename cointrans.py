@@ -46,10 +46,10 @@ class OrderItem(object):
 
 '''交易类'''
 class CoinTrans(object):
-    def __init__(self):
+    def __init__(self, market):
         # 订单状态
-        const.ORDER_STATUS_OPEN = 'Open'
-        const.ORDER_STATUS_CLOSED = 'Closed'
+        const.ORDER_STATUS_OPEN = 'open'
+        const.ORDER_STATUS_CLOSED = 'closed'
         const.TRANS_TYPE_BUY='buy'
         const.TRANS_TYPE_SELL='sell'
         # order 列表,所有交易的列表保存在这个列表中
@@ -60,7 +60,8 @@ class CoinTrans(object):
         self.__trans_amount_per_trans = publicparameters.TRANS_AMOUNT_PER_ORDER
         # 止盈比例
         self.__sell_profit_rate = publicparameters.SELL_PROFIT_RATE
-
+        # 市场的交易处理器
+        self.order_market = ordermanage.OrderManage(market)
         pass
 
     '''查询已经存在的orderitem, 并返回'''
@@ -74,15 +75,45 @@ class CoinTrans(object):
         return orderitem_result
 
     '''更新订单列表中状态'''
-    # TODO 更新
     def update_order_status(self):
+        for orderitem in self.order_list:
+            if orderitem.buy_status == const.ORDER_STATUS_OPEN:
+                order_status = self.order_market.getOrderStatus(orderitem.buy_order_id, orderitem.priceitem.coin)
+                orderitem.buy_status = order_status
+            if orderitem.sell_status == const.ORDER_STATUS_OPEN:
+                order_status = self.order_market.getOrderStatus(orderitem.buy_order_id, orderitem.priceitem.coin)
+                orderitem.sell_status = order_status
+
         pass
+    # 判断是不是满足买入或者卖出条件
+    def check_trans_indi(self):
+        # 总共的OPEN交易订单
+        total_open_count = self.get_open_order_count()
+        if total_open_count > publicparameters.MAX_OPEN_ORDER_POOL:
+            return False
+
+        return True
+        pass
+
+    # 目前交易列表中OPEN的交易数量
+    def get_open_order_count(self):
+        # 只有买入和卖出都成功的才算是结束的交易
+        total_open_order = 0
+        for orderitem in self.order_list:
+            if orderitem.buy_status == const.ORDER_STATUS_OPEN or orderitem.sell_status == const.ORDER_STATUS_OPEN:
+                total_open_order = total_open_order + 1
+        return total_open_order
+        pass
+
+    # 交易测试
     def test_coin_trans(self):
         pricebuffer = priceupdate.PriceBuffer(save_log_flag=False)
         priceitem = pricebuffer.getpriceitem('btc38', 'doge_cny')
-        orderstatus1 = self.coin_trans('btc38', 'buy', 0.006, priceitem)
-        orderstatus2 = self.coin_trans('btc38', 'sell', 0.02, priceitem)
+        orderstatus1 = self.coin_trans( 'buy', 0.006, priceitem)
+        orderstatus2 = self.coin_trans( 'sell', 0.02, priceitem)
         print('order status 1: {0}, 2: {1}'.format(orderstatus1, orderstatus2))
+        # 更新订单的状态
+        self.update_order_status()
 
     '''交易信息
     @market ==btc38, bter
@@ -90,8 +121,11 @@ class CoinTrans(object):
     @trans_price    交易价格
     @price_item     预测价格时的信息，用来进行对比
     '''
+    def coin_trans(self, trans_type, trans_price, price_item):
+        # 判断是不是满足交易的条件，不满足则退出不进行交易
+        if self.check_trans_indi() is False:
+            return False
 
-    def coin_trans(self, market, trans_type, trans_price, price_item):
         coin = price_item.coin
         coin_pair = coin+'_cny'
         # 对价格和交易单位进行rounding，否则有可能造成调用接口失败
@@ -113,7 +147,7 @@ class CoinTrans(object):
             if orderitem.buy_status != const.ORDER_STATUS_CLOSED:
                 return False
         # 交易的order_market
-        order_market = ordermanage.OrderManage(market)
+        order_market = self.order_market
 
         # 提交订单
         trans_order = order_market.submitOrder(coin_pair, trans_type, trans_price_rounding,\
@@ -140,7 +174,8 @@ class CoinTrans(object):
             orderitem.sell_amount = round(trans_units * trans_price_rounding, 2)
             orderitem.sell_unts = trans_units
             orderitem.sell_date = common.get_curr_time_str()
-
+        # 把orderitem加入到公共变量
+        publicparameters.ORDER_LIST.append(orderitem)
         return True
         pass
 
@@ -148,6 +183,7 @@ class CoinTrans(object):
 
 
 if __name__ == '__main__':
-    trans = CoinTrans()
+    trans = CoinTrans('btc38')
     trans.test_coin_trans()
+    print(len(publicparameters.ORDER_LIST))
     pass

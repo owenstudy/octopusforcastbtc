@@ -6,7 +6,7 @@ __author__ = 'Owen_Study/owen_study@126.com'
 import logging;logging.basicConfig(level=logging.INFO,filename='pricehistory.log')
 import datetime,time, operator
 import const,common
-import ordermanage
+import ordermanage,cointrans, publicparameters
 
 '''单个价格的类信息'''
 class PriceItem(object):
@@ -53,11 +53,11 @@ class PriceBuffer(object):
 
         # 设置影响判断条件的公共参数
         # 上升趋势时，价格深度比较强的百分比
-        #self.__PRICE_TREND_STRONG_PERCENTAGE=1.5
+        # self.__PRICE_TREND_STRONG_PERCENTAGE=1.5
         # 买入趋势比较弱的百分比
-        #self.__PRICE_TREND_WEAK_PERCENTAGE=0.6
+        # self.__PRICE_TREND_WEAK_PERCENTAGE=0.6
         # 买入指数判断的时间范围，初始为按1小时内的价格进行判断,单位为秒
-        #self.__PRICE_TREND_RANGE=3600
+        # self.__PRICE_TREND_RANGE=3600
         # 价格buffer中保存的最大的价格记录数
         self.__PRICE_BUFF_MAX=2000
         # 止盈卖出的比例，用来确认预测买入的是不是符合要求
@@ -73,9 +73,11 @@ class PriceBuffer(object):
         self.save_log_flag = save_log_flag
 
         # 测试基准时间，用于从文件读取时设置一个基准时间进行循环测试
-        self.basetime=None
+        self.basetime = None
+        # 处理交易类初始化
+        self.cointrans_handler = cointrans.CoinTrans('btc38')
 
-        if priceitem!=None:
+        if priceitem is not None:
             # 把处理好的价格加入到价格BUFFER列表
             self.newprice(priceitem)
 
@@ -104,6 +106,8 @@ class PriceBuffer(object):
         self.__PRICE_TREND_WEAK_PERCENTAGE = price_trend_weak_rate
         self.__PRICE_TREND_RANGE = price_trend_range
         self.__BUY_INDEX_STANDARD=buy_index_standard
+
+    '''更新BUFFER里面的订单状态'''
     '''增加新的价格列表'''
     def newprice(self,priceitem):
         # 初始化新价格的上升下降趋势和买入卖出建议
@@ -117,6 +121,8 @@ class PriceBuffer(object):
         # 对于需要买入的价格保存到买入列表
         if priceitem.price_buy_forecast is True:
             self.price_forecast_list.append(priceitem)
+            # 执行买入操作
+            self.cointrans_handler.coin_trans('buy', priceitem.buy_price, priceitem)
         # 对最近一次的价格进行校验，判断最后一次的价格的预测买入是不是正确
         self.buyforecast_verify(priceitem)
         # 把最新的价格加入BUFFER列表中
@@ -274,7 +280,12 @@ class PriceBuffer(object):
                     priceitem.price_buy_forecast_verify_date=common.CommonFunction.get_curr_date()
                     print('reverify result is correct: @%f'% newpriceitem.sell_price)
                     priceinfo = self.__save_price(priceitem)
-                    print(priceinfo+'-->Done@%s'%common.CommonFunction.get_curr_time())
+                    # 执行实际的卖出操作
+                    trans_status = self.cointrans_handler.coin_trans('sell', newpriceitem.buy_price, priceitem)
+                    trans_comments = "{0} -->Done: sell status: {1}:@{2}"
+                    # 打印出交易信息
+                    print(trans_comments.format(priceinfo, trans_status, common.get_curr_time_str()))
+                    # print(priceinfo+'-->Done: trans status: @%s'%common.CommonFunction.get_curr_time())
                 else:
                     priceitem.price_buy_forecast_verify=False
 
@@ -328,7 +339,7 @@ class MonitorPrice(object):
     def monitor_coin(self,market, coin_pair):
         coinpricebuffer=self.__pricebuffer_list.get(coin_pair)
         # 如果COIN对应的price buffer不存在，则创建一个新的对象
-        if coinpricebuffer==None:
+        if coinpricebuffer is None:
             coinpricebuffer=PriceBuffer()
             self.__pricebuffer_list[coin_pair]=coinpricebuffer
 
@@ -353,6 +364,9 @@ class MonitorPrice(object):
             for coin_pair in coin_list:
                 self.monitor_coin(market, coin_pair)
                 runtime = runtime + 1
+                # 很运行10次检查一下交易的状态
+                if runtime % 10 == 0:
+                    publicparameters.COIN_TRANS_LIST.update_order_status()
                 if runtime % 100 == 0:
                     print('Run %d' % runtime)
                     forecast_list = self.__pricebuffer_list.get(coin_pair).price_forecast_list
