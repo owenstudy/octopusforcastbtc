@@ -17,9 +17,18 @@ SELL_PROFIT_RATE = 0.01
 # 价格rounding的位数,包括价格和交易单元
 ROUNDING_PRICE={'doge': {'price': 5, 'unit': 0}, 'ltc': {'price': 2, 'unit': 2}, 'btc': {'price': 1, 'unit': 3}}
 
+# 是不是进行模拟测试
+# SIMU_ORDER_INDI = 'Y'
 
 # 交易的公共对象，每次交易时都调用这个对象
 ORDER_LIST = []
+
+# 文件名称
+# 还没有交易完成的文件
+OPEN_TRANS_FILE = 'open_trans_file'
+# 已经交易完成的文件名称
+CLOSED_TRANS_FILE = 'closed_trans_file'
+
 
 # 价格rounding规则
 def rounding_price(coin):

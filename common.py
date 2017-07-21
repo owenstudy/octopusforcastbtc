@@ -33,6 +33,10 @@ def get_curr_time_str():
     currtime = time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(time.time()))
     return currtime
 
+# 把JSON数据放在对象中
+class JSONObject:
+    def __init__(self, d):
+        self.__dict__ = d
 
 #test
 if __name__=='__main__':

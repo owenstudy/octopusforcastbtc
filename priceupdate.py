@@ -43,11 +43,13 @@ class PriceItem(object):
 
 '''保持一段时间内的价格列表，只保存最近一段时间，如一小时内的价格进行判断'''
 class PriceBuffer(object):
-    def __init__(self,priceitem=None, save_log_flag=True):
+    def __init__(self,market, priceitem=None, save_log_flag=True):
         # 保存执行过的价格列表
         self.price_buffer=[]
         # 保存那些预测为买入的记录
         self.price_forecast_list=[]
+        # 市场
+        self.market = market
         # 初始化常用的常量值
         self.__initconst()
 
@@ -122,7 +124,7 @@ class PriceBuffer(object):
         if priceitem.price_buy_forecast is True:
             self.price_forecast_list.append(priceitem)
             # 执行买入操作
-            self.cointrans_handler.coin_trans('buy', priceitem.buy_price, priceitem)
+            self.cointrans_handler.coin_trans(self.market, 'buy', priceitem.buy_price, priceitem)
         # 对最近一次的价格进行校验，判断最后一次的价格的预测买入是不是正确
         self.buyforecast_verify(priceitem)
         # 把最新的价格加入BUFFER列表中
@@ -281,7 +283,7 @@ class PriceBuffer(object):
                     print('reverify result is correct: @%f'% newpriceitem.sell_price)
                     priceinfo = self.__save_price(priceitem)
                     # 执行实际的卖出操作
-                    trans_status = self.cointrans_handler.coin_trans('sell', newpriceitem.buy_price, priceitem)
+                    trans_status = self.cointrans_handler.coin_trans(self.market, 'sell', newpriceitem.buy_price, priceitem)
                     trans_comments = "{0} -->Done: sell status: {1}:@{2}"
                     # 打印出交易信息
                     print(trans_comments.format(priceinfo, trans_status, common.get_curr_time_str()))
@@ -340,7 +342,7 @@ class MonitorPrice(object):
         coinpricebuffer=self.__pricebuffer_list.get(coin_pair)
         # 如果COIN对应的price buffer不存在，则创建一个新的对象
         if coinpricebuffer is None:
-            coinpricebuffer=PriceBuffer()
+            coinpricebuffer=PriceBuffer(market)
             self.__pricebuffer_list[coin_pair]=coinpricebuffer
 
         try:
