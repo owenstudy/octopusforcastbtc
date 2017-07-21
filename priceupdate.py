@@ -366,7 +366,8 @@ class MonitorPrice(object):
                 runtime = runtime + 1
                 # 很运行10次检查一下交易的状态
                 if runtime % 10 == 0:
-                    publicparameters.COIN_TRANS_LIST.update_order_status()
+                    cointrans_data = cointrans.CoinTrans(market)
+                    cointrans_data.update_order_status()
                 if runtime % 100 == 0:
                     print('Run %d' % runtime)
                     forecast_list = self.__pricebuffer_list.get(coin_pair).price_forecast_list
