@@ -1,3 +1,4 @@
+*.pyc
 *.dat
 *.log
 *.xml
@@ -7,3 +8,4 @@
 apikey
 
 __pycache__/
+bterapi/__pycache__/*.*

@@ -118,7 +118,7 @@ class CoinTrans(object):
         for orderitem in self.order_list:
             if orderitem.buy_status == const.ORDER_STATUS_OPEN or orderitem.sell_status == const.ORDER_STATUS_OPEN:
                 # 按对象保存，容易加载
-                open_trans_file[orderindex] = orderitem
+                open_trans_file['order'+str(orderindex)] = orderitem
                 # 格式化保存，供运行时参考
                 open_trans_log.write(str(orderitem))
         open_trans_file.close()
@@ -222,5 +222,5 @@ class CoinTrans(object):
 if __name__ == '__main__':
     trans = CoinTrans('btc38')
     trans.test_coin_trans()
-    print(len(publicparameters.ORDER_LIST))
+    # print(len(publicparameters.ORDER_LIST))
     pass
