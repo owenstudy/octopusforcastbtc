@@ -36,7 +36,7 @@ class Client():
             orderstatus='success'
         else:
             orderstatus='fail'
-            print('下订单时出现错误：%s'%str(order2))
+            print('下订单时出现错误：{0}, coin:{1}, rate:{2}, amount:{3}'.format(order2,coin, rate, amount))
         if len(order2)>=2:
             orderid=order2[1]
         else:

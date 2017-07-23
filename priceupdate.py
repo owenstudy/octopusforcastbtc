@@ -369,7 +369,7 @@ class MonitorPrice(object):
     def monitor_coin_list(self,market, coin_list):
 
         runtime = 0
-        maxruntime = 1000
+        maxruntime = 10000
         while (runtime<maxruntime):
             time.sleep(5)
             for coin_pair in coin_list:
@@ -379,6 +379,11 @@ class MonitorPrice(object):
                 if runtime % 10 == 0:
                     cointrans_data = cointrans.CoinTrans(market)
                     # print(len(publicparameters.ORDER_LIST))
+                    # 对OPEN订单进行卖出检查
+                    cointrans_data.sell_check()
+                    # 对超时的买单取消
+                    # cointrans_data.cancle_ot_buy_order(publicparameters.CANCEL_DURATION)
+
                     cointrans_data.update_order_status()
                 if runtime % 100 == 0:
                     print('Run {0}, 目前还未完成的订单有:{1}'.format(runtime, len(publicparameters.ORDER_LIST)))
@@ -424,15 +429,15 @@ class MonitorPrice(object):
     def check_best_coin(self):
 
         # 针对btc38市场进行全部COIN进行查找， TODO 需要进行一个更进一步的排序，同等比例的情况下数量优先
-        sorted_forecast_list = self.monitor_coin_list('btc38', ['doge_cny','xrp_cny','etc_cny','xpm_cny'])
+        # sorted_forecast_list = self.monitor_coin_list('btc38', ['doge_cny','xrp_cny','etc_cny','xpm_cny'])
 
-        # sorted_forecast_list = self.monitor_coin_list('btc38', ['doge_cny', 'btc_cny', 'ltc_cny', 'xrp_cny', 'eth_cny', 'etc_cny', \
-        #                             'bts_cny', 'xlm_cny', 'nxt_cny', 'ardr_cny', 'blk_cny', 'xem_cny', \
-        #                             'emc_cny', 'dash_cny', 'xzc_cny', 'sys_cny', 'vash_cny', 'ics_cny', \
-        #                             'eac_cny', 'xcn_cny', 'ppc_cny', 'mgc_cny', 'hlb_cny', 'zcc_cny', \
-        #                             'xpm_cny', 'ncs_cny', 'ybc_cny', 'anc_cny', 'bost_cny', 'mec_cny', \
-        #                             'wdc_cny', 'qrk_cny', 'dgc_cny', 'bec_cny', 'ric_cny', 'src_cny', \
-        #                             'tag_cny', 'med_cny', 'tmc_cny'])
+        sorted_forecast_list = self.monitor_coin_list('btc38', ['doge_cny', 'btc_cny', 'ltc_cny', 'xrp_cny', 'eth_cny', 'etc_cny', \
+                                    'bts_cny', 'xlm_cny', 'nxt_cny', 'ardr_cny', 'blk_cny', 'xem_cny', \
+                                    'emc_cny', 'dash_cny', 'xzc_cny', 'sys_cny', 'vash_cny', 'ics_cny', \
+                                    'eac_cny', 'xcn_cny', 'ppc_cny', 'mgc_cny', 'hlb_cny', 'zcc_cny', \
+                                    'xpm_cny', 'ncs_cny', 'ybc_cny', 'anc_cny', 'bost_cny', 'mec_cny', \
+                                    'wdc_cny', 'qrk_cny', 'dgc_cny', 'bec_cny', 'ric_cny', 'src_cny', \
+                                    'tag_cny', 'med_cny', 'tmc_cny'])
         return sorted_forecast_list
 
 if __name__ == '__main__':
