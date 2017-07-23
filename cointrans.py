@@ -7,6 +7,7 @@ __author__ = 'Owen_Study/owen_study@126.com'
 import shelve
 import const, publicparameters, ordermanage, common
 import priceupdate
+import time
 '''对查找到的COIN进行交易，买入或者卖出'''
 
 '''交易结构'''
@@ -18,7 +19,7 @@ class OrderItem(object):
         # market
         self.market = market
         # coin
-        self.__coin = coin
+        self.coin = coin
         # 买入价格
         self.buy_price = None
         # 买入金额，默认为10RMB
@@ -39,7 +40,7 @@ class OrderItem(object):
         # 卖出价格
         self.sell_price = None
         # 卖出UNITS
-        self.sell_unts = None
+        self.sell_units = None
         # 卖出金额
         self.sell_amount = None
         # 卖出日期
@@ -51,12 +52,12 @@ class OrderItem(object):
     def __repr__(self):
         order_detail_format = '{0}|{1}|{2}|{3}|{4}|{5}|{6}|{7}|{8}|{9}|{10}|{11}|{12}|{13}|\n'
         if self.sell_amount is not None:
-            profit_amount = self.sell_amount - self.buy_amount
+            profit_amount = round(self.sell_amount - self.buy_amount,2)
         else:
             profit_amount = ''
-        return order_detail_format.format(self.market.rjust(8),self.__coin.rjust(6), profit_amount, self.buy_order_id,self.buy_date,\
+        return order_detail_format.format(self.market.rjust(8),self.coin.rjust(6), profit_amount, self.buy_order_id,self.buy_date,\
                                           self.buy_status,self.buy_price,self.buy_amount,self.buy_units,self.sell_order_id,\
-                                          self.sell_date,self.sell_status,self.sell_amount,self.sell_unts)
+                                          self.sell_date,self.sell_status,self.sell_amount,self.sell_units)
     # 打印出来字符
     def __str__(self):
         return self.__repr__()
@@ -71,25 +72,20 @@ class CoinTrans(object):
         const.TRANS_TYPE_SELL='sell'
 
         # 临时保存的文件名称
-        self.open_trans_file_log = publicparameters.OPEN_TRANS_FILE+'.log'
+        self.open_trans_file_log_name = publicparameters.OPEN_TRANS_FILE+'.log'
         # 保存在sheleve中以方便加载
-        self.open_trans_file_db = publicparameters.OPEN_TRANS_FILE+'.dat'
-        self.closed_trans_file_log = publicparameters.CLOSED_TRANS_FILE+ '.log'
+        self.open_trans_file_db_name = publicparameters.OPEN_TRANS_FILE+'.dat'
+        self.closed_trans_file_db_name = publicparameters.CLOSED_TRANS_FILE+ '.dat'
+        # 三个文件处理器
+        # self.open_trans_file_db = shelve.open(self.open_trans_file_db_name)
+        # self.open_trans_file_log = open(self.open_trans_file_log_name,'w')
+        # self.close_trans_file_db = shelve.open(self.closed_trans_file_db_name)
+
+        # 加载最后一次程序运行停止后的数据
+        self.__load_last_trans()
 
         # order 列表,所有交易的列表保存在这个列表中,交易列表是个公共列表，以方便统一处理
         self.order_list = publicparameters.ORDER_LIST
-        # 从文件中加载上次运行时的订单数据
-        last_open_trans = shelve.open(self.open_trans_file_db)
-        # print(last_open_trans['order0'])
-        order_index=0
-        for openorder in last_open_trans.items():
-            dictname = 'order'+str(order_index)
-            orderdetail = last_open_trans[openorder[0]]
-            # 把orderdetail写到对象中
-
-
-            publicparameters.ORDER_LIST.append(openorder.get('order'+str(order_index)))
-        last_open_trans.close()
 
         # 最大的交易订单数，
         self.__max_open_order_pool = publicparameters.MAX_OPEN_ORDER_POOL
@@ -101,6 +97,27 @@ class CoinTrans(object):
         self.order_market = ordermanage.OrderManage(market)
 
         pass
+    '''加载上次未处理完成的trans'''
+    def __load_last_trans(self):
+        # 只有程序刚运行时并且文件中有数据时才加载
+        # if len(publicparameters.ORDER_LIST) != 0:
+        #     return
+        # 从文件中加载上次运行时的订单数据
+        open_trans_file_db = shelve.open(self.open_trans_file_db_name)
+
+        last_order_list = []
+        # if len(last_open_trans.items()) == 0:
+        #     last_order_list = []
+        # else:
+        for item in open_trans_file_db.items():
+            orderitem = open_trans_file_db[item[0]]
+            last_order_list.append(orderitem)
+
+        publicparameters.ORDER_LIST = last_order_list
+        self.order_list = last_order_list
+
+        open_trans_file_db.close()
+
 
     '''查询已经存在的orderitem, 并返回'''
     def get_order_item(self, priceitem):
@@ -111,54 +128,120 @@ class CoinTrans(object):
                 orderitem_result = item
                 break
         return orderitem_result
+    '''OPEN列表中的ORDER已经成功结束，则从OPEN列表中删除，并加入到close列表'''
+    def remove_closed_order(self, orderitem):
+        open_trans_file_db = shelve.open(self.open_trans_file_db_name)
+        closed_trans_file_db = shelve.open(self.closed_trans_file_db_name)
+        for curritem in open_trans_file_db.items():
+            ordername = curritem[0]
+            curroderitem = curritem[1]
+            if curroderitem.coin == orderitem.coin and curroderitem.buy_date == orderitem.buy_date:
+                # 保存到close file中
+                closed_trans_file_db[ordername] = orderitem
+                # 同时从OPEN列表中删除
+                del open_trans_file_db[ordername]
+
+        open_trans_file_db.close()
+        closed_trans_file_db.close()
 
     '''更新订单列表中状态'''
     def update_order_status(self):
+        closed_order_list =[]
         for orderitem in self.order_list:
             if orderitem.buy_status == const.ORDER_STATUS_OPEN:
-
-                # order_status = self.order_market.getOrderStatus(orderitem.buy_order_id, orderitem.priceitem.coin)
                 order_status = self.order_market.getOrderStatus(orderitem.buy_order_id, orderitem.priceitem.coin)
                 orderitem.buy_status = order_status
+                self.save_order(orderitem, 'update')
             if orderitem.sell_status == const.ORDER_STATUS_OPEN:
                 order_status = self.order_market.getOrderStatus(orderitem.buy_order_id, orderitem.priceitem.coin)
                 orderitem.sell_status = order_status
-        # 把更新的结果保存到文件中
-        self.save_order()
-        # 更新状态完成后，把最新的结果保存起来
+                self.save_order(orderitem, 'update')
+                # 从OPEN文件中删除并加入到CLOSE文件中
+                if order_status == const.ORDER_STATUS_CLOSED:
+                    self.remove_closed_order(orderitem)
+                    # 加入到删除列表
+                    closed_order_list.append(orderitem)
+            # 检查数据，有关闭的加入到删除列表
+            if orderitem.sell_status == const.ORDER_STATUS_CLOSED:
+                self.remove_closed_order(orderitem)
+                # 加入到删除列表
+                closed_order_list.append(orderitem)
+
+        # 从列表中删除
+        for item in closed_order_list:
+            self.order_list.remove(item)
+
+        # 把OPEN记录保存LOG文件中不方便查看
+        open_trans_file_log = open(self.open_trans_file_log_name, 'w')
+        open_trans_file_db = shelve.open(self.open_trans_file_db_name)
+        for item in open_trans_file_db.items():
+            orderitemstr = str(item[1])
+            open_trans_file_log.write(orderitemstr)
+        open_trans_file_log.close()
+        open_trans_file_db.close()
+        pass
+
+    '''保存订单到不同的文件中以便查询'''
+    def save_order(self, orderitem, ordertype = 'new'):
+        # 保存新的和更新的订单到文件中
+        open_trans_file_db = shelve.open(self.open_trans_file_db_name)
+        ordernum = len(open_trans_file_db.items()) + 1
+        ordername = 'order{0}'.format(ordernum)
+        if ordertype == 'new':
+            # 直接增加一条记录
+            open_trans_file_db[ordername] = orderitem
+        #     查找到对应的记录并更新
+        elif ordertype == 'update':
+            for order in open_trans_file_db.items():
+                curritem = order[1]
+                if curritem.coin == orderitem.coin and curritem.buy_date == orderitem.buy_date:
+                    open_trans_file_db[order[0]] = orderitem
+                    break
+        open_trans_file_db.close()
+
         pass
     '''保存订单到不同的文件中以便查询'''
-    def save_order(self):
+    def save_orderX(self):
         # OPEN状态的，每次都是替换保存，放最新的数据在里面
         # open_trans_file = open('open_trans.log','w')
-        open_trans_file = shelve.open(self.open_trans_file_db)
+        open_trans_file_db = shelve.open(self.open_trans_file_db)
         # 把格式化的内容保存到log表中，和上面的数据是一致的，只是显示更加容易
         open_trans_log = open(self.open_trans_file_log,'w')
         # 已经交易成功的放到成功列表中
-        open_trans_log_close = open(self.closed_trans_file_log, 'a')
+        close_trans_log = open(self.closed_trans_file_log, 'a')
 
         # 清除已经存在 的内容
-        # open_trans_file.clear()
-        # 把当前OPEN交易信息保存起来
-        orderindex = 0
+        open_trans_file_db.clear()
+        # 保存到shelve， 以方便保存
+        open_trans_file_db['openorderlist'] = self.order_list
+        # 临时的列表，保存列表中已经CLOSE的部分
+        close_order_list =[]
+        # 保存当前交易记录到LOG文件中以方便查看
         for orderitem in self.order_list:
-            if orderitem.buy_status == const.ORDER_STATUS_OPEN or orderitem.sell_status == const.ORDER_STATUS_OPEN:
-                # 按对象保存，容易加载
-                open_trans_file['order'+str(orderindex)] = orderitem
+            if orderitem.buy_status == const.ORDER_STATUS_OPEN or \
+                    (orderitem.sell_status == const.ORDER_STATUS_OPEN or orderitem.sell_status is None):
                 # 格式化保存，供运行时参考
                 open_trans_log.write(str(orderitem))
-            else:
-                open_trans_log_close.write(str(orderitem))
+            # 已经成交的记录
+            elif orderitem.buy_status == const.ORDER_STATUS_CLOSED and orderitem.sell_status == const.ORDER_STATUS_CLOSED:
+                # 保存已经成效的订单加入到LOG文件中
+                print('交易完成，买入完成，卖出也完成！')
+                close_trans_log.write(str(orderitem))
+                close_order_list.append(orderitem)
+        # 从当前列表中移除已经close的记录
+        for close_order_item in close_order_list:
+            self.order_list.remove(close_order_item)
 
-        open_trans_file.close()
+        # 关闭处理的文件
+        open_trans_file_db.close()
         open_trans_log.close()
-        open_trans_log_close.close()
+        close_trans_log.close()
 
     # 判断是不是满足买入或者卖出条件
     def check_trans_indi(self):
         # 总共的OPEN交易订单
         total_open_count = self.get_open_order_count()
-        if total_open_count > publicparameters.MAX_OPEN_ORDER_POOL:
+        if total_open_count >= publicparameters.MAX_OPEN_ORDER_POOL:
             return False
 
         return True
@@ -169,31 +252,38 @@ class CoinTrans(object):
         # 只有买入和卖出都成功的才算是结束的交易
         total_open_order = 0
         for orderitem in self.order_list:
-            if orderitem.buy_status == const.ORDER_STATUS_OPEN or orderitem.sell_status == const.ORDER_STATUS_OPEN:
+            if orderitem.buy_status == const.ORDER_STATUS_OPEN or (orderitem.sell_status == const.ORDER_STATUS_OPEN or orderitem.sell_status is None):
                 total_open_order = total_open_order + 1
         return total_open_order
         pass
 
     # 交易测试
     def test_coin_trans(self):
-        pricebuffer = priceupdate.PriceBuffer(save_log_flag=False)
+        pricebuffer = priceupdate.PriceBuffer('btc38', save_log_flag=False)
         priceitem = pricebuffer.getpriceitem('btc38', 'doge_cny')
-        orderstatus1 = self.coin_trans( 'btc38', 'buy', 0.006, priceitem)
-        orderstatus2 = self.coin_trans( 'btc38', 'sell', 0.02, priceitem)
-        print('order status 1: {0}, 2: {1}'.format(orderstatus1, orderstatus2))
+        # 循环检查OPEN订单是不是满足卖出条件
+
+        orderstatus1 = self.coin_trans( 'btc38', 'buy', 0.008, priceitem)
+        # orderstatus2 = self.coin_trans( 'btc38', 'sell', 0.01345, priceitem)
+        # print('order status 1: {0}, 2: {1}'.format(orderstatus1, orderstatus2))
+        runtimes = 0
+        while (True):
+            self.update_order_status()
+            pricebuffer = priceupdate.PriceBuffer('btc38', save_log_flag=False)
+            newpriceitem = pricebuffer.getpriceitem('btc38', 'doge_cny')
+            for openorderitem in self.order_list:
+                if openorderitem.buy_status == const.ORDER_STATUS_CLOSED:
+                    # 满足卖出条件后提交卖出订单
+                    if newpriceitem.buy_price>openorderitem.buy_price*(1+self.__sell_profit_rate) and openorderitem.sell_status ==const.ORDER_STATUS_OPEN:
+                        self.coin_trans('btc38', 'sell', newpriceitem.buy_price, openorderitem.priceitem)
+                        print('满足卖出条件，提交了定单{0}, 卖出价格:{1}'.format(openorderitem.sell_order_id, newpriceitem.buy_price))
+            runtimes = runtimes + 1
+            time.sleep(5)
+            print('has run %d times'%runtimes)
+            pass
 
         # 更新订单的状态
         self.update_order_status()
-    # 模拟运行 TODO
-    def simu_submit_order(self, coin_pair, trans_type, trans_price_,trans_units):
-        order_id=1234
-        simu_result = {'order_id':order_id, 'status':'closed'}
-        simu_result_obj = common.JSONObject(simu_result)
-
-        return simu_result_obj
-    # 模拟运行，得到状态
-    def simu_getOrderStatus(self, order_id, coin):
-        return 'closed'
 
     '''交易信息
     @market ==btc38, bter
@@ -229,6 +319,7 @@ class CoinTrans(object):
         # 交易的order_market
         order_market = self.order_market
 
+        print('开始{0}交易:{1},{2}, {3}'.format(trans_type, price_item.pricedate, price_item.coin, price_item.buy_price))
         # 提交订单
         trans_order = order_market.submitOrder(coin_pair, trans_type, trans_price_rounding, \
                                                trans_units)
@@ -249,16 +340,22 @@ class CoinTrans(object):
             orderitem.priceitem = price_item
             # 买入时新增加一个订单，卖出时则直接更新已经存在的订单
             self.order_list.append(orderitem)
+            # 保存最新的订单到文件中
+            self.save_order(orderitem, 'new')
+            self.update_order_status()
 
         elif trans_type == const.TRANS_TYPE_SELL:
             orderitem.sell_order_id = order_id
             orderitem.sell_status = order_status
             orderitem.sell_price = trans_price_rounding
             orderitem.sell_amount = round(trans_units * trans_price_rounding, 2)
-            orderitem.sell_unts = trans_units
+            orderitem.sell_units = trans_units
             orderitem.sell_date = common.get_curr_time_str()
+            # 保存最新的订单到文件中
+            self.save_order(orderitem, 'update')
+            self.update_order_status()
 
-        return True
+        return orderitem
         pass
 
 
@@ -266,6 +363,26 @@ class CoinTrans(object):
 
 if __name__ == '__main__':
     trans = CoinTrans('btc38')
-    trans.test_coin_trans()
+    # trans.test_coin_trans()
+
+    pricebuffer = priceupdate.PriceBuffer('btc38', save_log_flag=False)
+    priceitem = pricebuffer.getpriceitem('btc38', 'doge_cny')
+    # time.sleep(2)
+    # priceitem2 = pricebuffer.getpriceitem('btc38', 'doge_cny')
+    #
+    # # 循环检查OPEN订单是不是满足卖出条件
+    #
+    # orderstatus1 = trans.coin_trans( 'btc38', 'buy', 0.010, priceitem)
+    # trans.update_order_status()
+
+    # orderstatus2 = trans2.coin_trans( 'btc38', 'buy', 0.009, priceitem2)
+    # print(len(publicparameters.ORDER_LIST))
+    # print(len(trans2.order_list))
+
+
+    # orderstatus2 = trans.coin_trans( 'btc38', 'sell', 0.01345, priceitem)
+    # print('order status 1: {0}, 2: {1}'.format(orderstatus1, orderstatus2))
+
+
     # print(len(publicparameters.ORDER_LIST))
     pass

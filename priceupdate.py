@@ -77,11 +77,14 @@ class PriceBuffer(object):
         # 测试基准时间，用于从文件读取时设置一个基准时间进行循环测试
         self.basetime = None
         # 处理交易类初始化
-        self.cointrans_handler = cointrans.CoinTrans('btc38')
+        # self.cointrans_handler = cointrans.CoinTrans(market)
+        self.cointrans_handler = cointrans.CoinTrans(market)
 
         if priceitem is not None:
             # 把处理好的价格加入到价格BUFFER列表
             self.newprice(priceitem)
+        # 控制的price buffer list
+        self.__pricebuffer_list = {}
 
     # 设置常用常量列表
     def __initconst(self):
@@ -312,22 +315,25 @@ class PriceBuffer(object):
 
     '''从市场取得价格，返回一个价格明细'''
     def getpriceitem(self,market,coin_pair):
-        order_market=ordermanage.OrderManage(market)
-        price_depth=order_market.getMarketDepth(coin_pair)
-        buy_depth=0
-        sell_depth=0
-
-        coin=coin_pair.split('_')[0]
-        buy_price=price_depth.buy[0][0]
-        sell_price=price_depth.sell[0][0]
-        # 尝试列表中所有的买入和
-        for buy_item in price_depth.buy:
-            buy_depth=buy_depth+buy_item[1]
-        for sell_item in price_depth.sell:
-            sell_depth=sell_depth+sell_item[1]
-        buy_depth=round(buy_depth,2)
-        sell_depth=round(sell_depth,2)
-        priceitem=PriceItem(datetime.datetime.now(),coin,buy_price,buy_depth,sell_price,sell_depth)
+        try:
+            order_market=ordermanage.OrderManage(market)
+            price_depth=order_market.getMarketDepth(coin_pair)
+            buy_depth=0
+            sell_depth=0
+            priceitem=None
+            coin=coin_pair.split('_')[0]
+            buy_price=price_depth.buy[0][0]
+            sell_price=price_depth.sell[0][0]
+            # 尝试列表中所有的买入和
+            for buy_item in price_depth.buy:
+                buy_depth=buy_depth+buy_item[1]
+            for sell_item in price_depth.sell:
+                sell_depth=sell_depth+sell_item[1]
+            buy_depth=round(buy_depth,2)
+            sell_depth=round(sell_depth,2)
+            priceitem=PriceItem(datetime.datetime.now(),coin,buy_price,buy_depth,sell_price,sell_depth)
+        except Exception as e:
+            print('取得价格列表时错误：{0}'.format(str(e)))
         return priceitem
 
 '''监控价格的运行'''
@@ -347,8 +353,11 @@ class MonitorPrice(object):
 
         try:
             coinpricebuffer.adjust_params(0.95,1.2,0.7,3600)
+            # 获取当前的市场价格
             newpriceitem = coinpricebuffer.getpriceitem(market, coin_pair)
+            # 把当前的价格加入到价格列表
             coinpricebuffer.newprice(newpriceitem)
+            # 最后一次的价格
             lastpriceitem = coinpricebuffer.price_buffer[len(coinpricebuffer.price_buffer)-2]
             if lastpriceitem.price_buy_forecast is True:
                 # print(coinpricebuffer.price_buffer[len(coinpricebuffer.price_buffer)-2])
@@ -369,17 +378,22 @@ class MonitorPrice(object):
                 # 很运行10次检查一下交易的状态
                 if runtime % 10 == 0:
                     cointrans_data = cointrans.CoinTrans(market)
+                    # print(len(publicparameters.ORDER_LIST))
                     cointrans_data.update_order_status()
                 if runtime % 100 == 0:
-                    print('Run %d' % runtime)
+                    print('Run {0}, 目前还未完成的订单有:{1}'.format(runtime, len(publicparameters.ORDER_LIST)))
+                    # 获取当前COIN中预测可以买入的列表
                     forecast_list = self.__pricebuffer_list.get(coin_pair).price_forecast_list
                     verified_count = 0
+                    # 判断当前预测的列表中哪些达到了预期的盈利目标
                     for forecast_item in forecast_list:
                         if forecast_item.price_buy_forecast_verify is True:
                             verified_count = verified_count + 1
+                    # 输出每个COIN中预测的情况，多少达到了预期盈利
                     if len(forecast_list) > 0:
                         print('%s: verified:%d, total:%d for coin:%s'\
                               %(common.CommonFunction.get_curr_time(), verified_count, len(forecast_list), coin_pair))
+        # 把预测中的列表输出出来
         sorted_forecast_list = self.output_forecast_list(market, coin_list)
         return sorted_forecast_list
         pass
@@ -410,13 +424,15 @@ class MonitorPrice(object):
     def check_best_coin(self):
 
         # 针对btc38市场进行全部COIN进行查找， TODO 需要进行一个更进一步的排序，同等比例的情况下数量优先
-        sorted_forecast_list = self.monitor_coin_list('btc38', ['doge_cny', 'btc_cny', 'ltc_cny', 'xrp_cny', 'eth_cny', 'etc_cny', \
-                                    'bts_cny', 'xlm_cny', 'nxt_cny', 'ardr_cny', 'blk_cny', 'xem_cny', \
-                                    'emc_cny', 'dash_cny', 'xzc_cny', 'sys_cny', 'vash_cny', 'ics_cny', \
-                                    'eac_cny', 'xcn_cny', 'ppc_cny', 'mgc_cny', 'hlb_cny', 'zcc_cny', \
-                                    'xpm_cny', 'ncs_cny', 'ybc_cny', 'anc_cny', 'bost_cny', 'mec_cny', \
-                                    'wdc_cny', 'qrk_cny', 'dgc_cny', 'bec_cny', 'ric_cny', 'src_cny', \
-                                    'tag_cny', 'med_cny', 'tmc_cny'])
+        sorted_forecast_list = self.monitor_coin_list('btc38', ['doge_cny','xrp_cny','etc_cny','xpm_cny'])
+
+        # sorted_forecast_list = self.monitor_coin_list('btc38', ['doge_cny', 'btc_cny', 'ltc_cny', 'xrp_cny', 'eth_cny', 'etc_cny', \
+        #                             'bts_cny', 'xlm_cny', 'nxt_cny', 'ardr_cny', 'blk_cny', 'xem_cny', \
+        #                             'emc_cny', 'dash_cny', 'xzc_cny', 'sys_cny', 'vash_cny', 'ics_cny', \
+        #                             'eac_cny', 'xcn_cny', 'ppc_cny', 'mgc_cny', 'hlb_cny', 'zcc_cny', \
+        #                             'xpm_cny', 'ncs_cny', 'ybc_cny', 'anc_cny', 'bost_cny', 'mec_cny', \
+        #                             'wdc_cny', 'qrk_cny', 'dgc_cny', 'bec_cny', 'ric_cny', 'src_cny', \
+        #                             'tag_cny', 'med_cny', 'tmc_cny'])
         return sorted_forecast_list
 
 if __name__ == '__main__':
