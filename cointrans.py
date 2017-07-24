@@ -47,6 +47,22 @@ class OrderItem(object):
         self.sell_date = None
         # 卖出状态
         self.sell_status = None
+    '''生成表的动态类，用来自动生成ORM的模型'''
+    def gen_table_class(self):
+
+        create_table_sql = 'CREATE TABLE IF NOT EXISTS t_coin_trans (\n'+\
+                    'trans_id INT(11) NOT NULL AUTO_INCREMENT,\n'
+        table_class= 'orderitemTable = Table(\n'+ '"t_coin_trans", metadata,\n'+ \
+                     "Column('trans_id', INT(11), primary_key=True),\n"
+        for name, value in vars(self).items():
+            # Column('trans_id', Integer, primary_key=True),
+            table_class = table_class + "Column('{0}', VARCHAR(100)),\n".format(name)
+            create_table_sql = create_table_sql + "'{0}' VARCHAR(100),\n".format(name)
+        create_table_sql = create_table_sql[:len(create_table_sql)-2]+'\n)'
+        table_class = table_class[:len(table_class)-2] +'\n)'
+        print(table_class)
+        print(create_table_sql)
+        return table_class
     '''转换成字符保存'''
     # TODO
     def __repr__(self):
@@ -403,8 +419,14 @@ class CoinTrans(object):
 
 
 if __name__ == '__main__':
+
+    orderitem = OrderItem('btc38', 'doge')
+    orderitem.gen_table_class()
+
+
     trans = CoinTrans('btc38')
     # trans.test_coin_trans()
+
 
     pricebuffer = priceupdate.PriceBuffer('btc38', save_log_flag=False)
     priceitem = pricebuffer.getpriceitem('btc38', 'doge_cny')

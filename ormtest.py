@@ -18,15 +18,26 @@ from sqlalchemy.dialects.mysql import \
 metadata = MetaData()
 userTable = Table(
     "t_coin_trans", metadata,
-    Column('trans_id', Integer, primary_key=True),
-    Column('coin', VARCHAR(10),  nullable=False),
-    Column('buy_date', VARCHAR(100),  nullable=False),
-    Column('trans_status', VARCHAR(10), nullable=False),
-    Column('order_data', VARCHAR(1000), nullable=False),
-    Column('priceitem', VARCHAR(1000), nullable=False)
+    Column('trans_id', INTEGER, primary_key=True),
+    Column('sell_order_id', INTEGER),
+    Column('sell_units', FLOAT),
+    Column('buy_status', VARCHAR(100)),
+    Column('coin', VARCHAR(100)),
+    Column('sell_price', FLOAT),
+    Column('buy_order_id', INTEGER),
+    Column('buy_amount', FLOAT),
+    Column('sell_amount', FLOAT),
+    Column('sell_date', VARCHAR(100)),
+    Column('sell_status', VARCHAR(100)),
+    Column('buy_date', VARCHAR(100)),
+    Column('buy_price', FLOAT),
+    Column('buy_units', FLOAT),
+    Column('priceitem', VARCHAR(1000)),
+    Column('market', VARCHAR(100))
 )
+
 # 创建数据库连接,MySQLdb连接方式
-mysql_db = create_engine('mysql+pymysql://root:Windows2000@127.0.0.1:3306/coins')
+mysql_db = create_engine('mysql+pymysql://root:Windows2000@192.168.1.104:3306/coins')
 # 创建数据库连接，使用 mysql-connector-python连接方式
 # mysql_db = create_engine("mysql+mysqlconnector://用户名:密码@ip:port/dbname")
 # 生成表
