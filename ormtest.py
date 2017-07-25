@@ -37,7 +37,7 @@ userTable = Table(
 )
 
 # 创建数据库连接,MySQLdb连接方式
-mysql_db = create_engine('mysql+pymysql://root:Windows2000@192.168.1.104:3306/coins')
+mysql_db = create_engine('mysql+pymysql://coin:Windows2000@localhost:3306/coins')
 # 创建数据库连接，使用 mysql-connector-python连接方式
 # mysql_db = create_engine("mysql+mysqlconnector://用户名:密码@ip:port/dbname")
 # 生成表
@@ -61,7 +61,7 @@ session = Session()
 def main():
     u = User()
     # 给映射类添加以下必要的属性,因为上面创建表指定这个字段不能为空,且唯一
-    u.trans_id = 123
+    # u.trans_id = 919
     # 按照上面创建表的相关代码，这个字段允许为空
     u.coin = 'btc'
     u.buy_date = '2017/4/5'
@@ -82,17 +82,16 @@ def main():
     # 根据主键显示
     print(query.get(1))
     # 类似于SQL的where,打印其中的第一个
-    print
-    query.filter_by(trans_id='123').first()
-    u = query.filter_by(coin='btc').first()
+    print(query.filter_by(trans_id='123').first())
+    u = query.filter_by(trans_id=118).first()
     # 修改其密码字段
-    u.buy_date = '2017/4/4'
+    u.buy_date = '2017/2/4'
     # 提交事务
     session.commit()
     # 打印会出现新密码
     # 根据id字段排序,打印其中的用户名和密码
-    for instance in session.query(User).order_by(User.trans_id):
-        print (instance.trans_id, instance.coin)
+    # for instance in session.query(User).order_by(User.trans_id):
+    #     print (instance.trans_id, instance.coin)
     # 释放资源
     session.close()
 

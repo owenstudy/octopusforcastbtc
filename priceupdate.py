@@ -331,7 +331,7 @@ class PriceBuffer(object):
                 sell_depth=sell_depth+sell_item[1]
             buy_depth=round(buy_depth,2)
             sell_depth=round(sell_depth,2)
-            priceitem=PriceItem(datetime.datetime.now(),coin,buy_price,buy_depth,sell_price,sell_depth)
+            priceitem=PriceItem(common.get_curr_time_str(),coin,buy_price,buy_depth,sell_price,sell_depth)
         except Exception as e:
             print('取得价格列表时错误：{0}'.format(str(e)))
         return priceitem

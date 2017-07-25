@@ -419,26 +419,26 @@ class CoinTrans(object):
 
 
 if __name__ == '__main__':
-
-    orderitem = OrderItem('btc38', 'doge')
-    orderitem.gen_table_class()
-
-
+    #
+    # orderitem = OrderItem('btc38', 'doge')
+    # orderitem.gen_table_class()
+    #
+    #
     trans = CoinTrans('btc38')
-    # trans.test_coin_trans()
-
-
+    # # trans.test_coin_trans()
+    #
+    #
     pricebuffer = priceupdate.PriceBuffer('btc38', save_log_flag=False)
     priceitem = pricebuffer.getpriceitem('btc38', 'doge_cny')
-
-    trans.cancle_ot_buy_order(50)
-    trans.sell_check()
-    # time.sleep(2)
+    #
+    # trans.cancle_ot_buy_order(50)
+    # trans.sell_check()
+    # # time.sleep(2)
     # priceitem2 = pricebuffer.getpriceitem('btc38', 'doge_cny')
     #
     # # 循环检查OPEN订单是不是满足卖出条件
     #
-    # orderstatus1 = trans.coin_trans( 'btc38', 'buy', 0.010, priceitem)
+    orderstatus1 = trans.coin_trans( 'btc38', 'buy', 0.009, priceitem)
     # trans.update_order_status()
 
     # orderstatus2 = trans2.coin_trans( 'btc38', 'buy', 0.009, priceitem2)
