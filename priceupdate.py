@@ -6,7 +6,7 @@ __author__ = 'Owen_Study/owen_study@126.com'
 import logging;logging.basicConfig(level=logging.INFO,filename='pricehistory.log')
 import datetime,time, operator
 import const,common
-import ordermanage,cointrans, publicparameters
+import ordermanage,cointrans, publicparameters, ormmysql
 
 '''单个价格的类信息'''
 class PriceItem(object):
@@ -112,6 +112,24 @@ class PriceBuffer(object):
         self.__PRICE_TREND_RANGE = price_trend_range
         self.__BUY_INDEX_STANDARD=buy_index_standard
 
+    '''得到预测列表中的校验正确的比例,买入时参考这一比例'''
+
+    def get_forecast_rate(self):
+        # 判断当前预测的列表中哪些达到了预期的盈利目标
+        verified_count = 0
+        # 获取当前COIN中预测可以买入的列表
+        forecast_list = self.price_forecast_list
+        for forecast_item in forecast_list:
+            if forecast_item.price_buy_forecast_verify is True:
+                verified_count = verified_count + 1
+        total_records = len(forecast_list)
+        if total_records == 0:
+            rate = 0
+        else:
+            rate = verified_count / len(forecast_list)
+
+        return rate
+
     '''更新BUFFER里面的订单状态'''
     '''增加新的价格列表'''
     def newprice(self,priceitem):
@@ -127,7 +145,10 @@ class PriceBuffer(object):
         if priceitem.price_buy_forecast is True:
             self.price_forecast_list.append(priceitem)
             # 执行买入操作
-            self.cointrans_handler.coin_trans(self.market, 'buy', priceitem.buy_price, priceitem)
+            verified_rate = self.get_forecast_rate()
+            # 只有校验成功率超过一定比例才进行买入操作
+            if verified_rate>0.2:
+                self.cointrans_handler.coin_trans(self.market, 'buy', priceitem.buy_price, priceitem)
         # 对最近一次的价格进行校验，判断最后一次的价格的预测买入是不是正确
         self.buyforecast_verify(priceitem)
         # 把最新的价格加入BUFFER列表中
@@ -149,7 +170,7 @@ class PriceBuffer(object):
             titlestr=titlestr + ('|buyVerifyIndi').rjust(12)
             #logging.info(titlestr)
         # priceitem=self.price_buffer[len(self.price_buffer)-2]
-        pricetimestr=common.CommonFunction.datetimetostr(priceitem.pricedate).rjust(25)
+        pricetimestr=priceitem.pricedate.rjust(25)
         priceinfo='|%s|%s|%s|%s|%s|%s|%s|%s|%s'%(pricetimestr,priceitem.coin.rjust(6),\
                 str(priceitem.buy_price).rjust(10),str(priceitem.buy_depth).rjust(20),str(priceitem.sell_price).rjust(10),\
                 str(priceitem.sell_depth).rjust(20),str(priceitem.price_buy_index).rjust(4),\
@@ -246,7 +267,8 @@ class PriceBuffer(object):
         total_buy_times=0
         total_price_number=0
         for priceitem in self.price_buffer:
-            if priceitem.pricedate>starttime and priceitem.pricedate<endtime:
+            pricedate = common.CommonFunction.strtotime(priceitem.pricedate)
+            if pricedate>starttime and pricedate<endtime:
                 total_price_number=total_price_number+1
                 if priceitem.price_trend_buy==const.PRICE_TREND_BUY_STRONG:
                     total_buy_times=total_buy_times+2
@@ -271,10 +293,11 @@ class PriceBuffer(object):
             newpriceitem.price_buy_forecast_verify = False
             return
         # 判断当前之前一段时间的预测买入是不是达到了卖出条件，如果达到说明预期结果正确
-        endtime = newpriceitem.pricedate
+        endtime = common.CommonFunction.strtotime(newpriceitem.pricedate)
         starttime = endtime-datetime.timedelta(seconds=self.__PRICE_TREND_RANGE)
         for priceitem in self.price_buffer:
-            if priceitem.pricedate>starttime and priceitem.pricedate< endtime and priceitem.coin==newpriceitem.coin:
+            pricedate = common.CommonFunction.strtotime(priceitem.pricedate)
+            if pricedate>starttime and pricedate< endtime and priceitem.coin==newpriceitem.coin:
                 # 已经预测过且得到验证的则不需要再继续进行
                 if priceitem.price_buy_forecast_verify is True or priceitem.price_buy_forecast is False:
                     continue
@@ -282,7 +305,7 @@ class PriceBuffer(object):
                 # 达到卖出条件则认为预测成功
                 if actual_profit_rate>self.sell_profit_rate:
                     priceitem.price_buy_forecast_verify=True
-                    priceitem.price_buy_forecast_verify_date=common.CommonFunction.get_curr_date()
+                    priceitem.price_buy_forecast_verify_date=common.get_curr_time_str()
                     print('reverify result is correct: @%f'% newpriceitem.sell_price)
                     priceinfo = self.__save_price(priceitem)
                     # 执行实际的卖出操作
@@ -331,6 +354,7 @@ class PriceBuffer(object):
                 sell_depth=sell_depth+sell_item[1]
             buy_depth=round(buy_depth,2)
             sell_depth=round(sell_depth,2)
+            # 把价格日期保存成字符串
             priceitem=PriceItem(common.get_curr_time_str(),coin,buy_price,buy_depth,sell_price,sell_depth)
         except Exception as e:
             print('取得价格列表时错误：{0}'.format(str(e)))
@@ -365,6 +389,7 @@ class MonitorPrice(object):
         except Exception as e:
             print(str(e))
         pass
+
     '''监控一个COIN列表'''
     def monitor_coin_list(self,market, coin_list):
 
@@ -386,7 +411,7 @@ class MonitorPrice(object):
 
                     cointrans_data.update_order_status()
                 if runtime % 100 == 0:
-                    print('Run {0}, 目前还未完成的订单有:{1}'.format(runtime, len(publicparameters.ORDER_LIST)))
+                    print('Run {0}, 目前还未完成的订单有:{1}'.format(runtime, ormmysql.openordercount()))
                     # 获取当前COIN中预测可以买入的列表
                     forecast_list = self.__pricebuffer_list.get(coin_pair).price_forecast_list
                     verified_count = 0

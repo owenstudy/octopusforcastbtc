@@ -6,7 +6,7 @@ create database coins;
 #create user name to access coins
 create user coin identified by 'Windows2000';
 #grant privileges to coin
-GRANT ALL PRIVILEGES ON coins.* TO 'coin'@'localhost' IDENTIFIED BY 'Windows2000';
+GRANT ALL PRIVILEGES ON coins.* TO 'coin' IDENTIFIED BY 'Windows2000';
 
 #change to coins database
 use coins;
