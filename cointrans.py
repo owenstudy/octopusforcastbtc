@@ -110,6 +110,7 @@ class CoinTrans(object):
                 if newpriceitem.buy_price >= curroderitem.buy_price*(1+publicparameters.SELL_PROFIT_RATE):
                     # 执行实际的卖出操作
                     trans_status = self.coin_trans(self.market, 'sell', newpriceitem.buy_price, curroderitem.priceitem)
+
                     if trans_status is True:
                         print('{0}:已经成功卖出,价格:{1}, coin: {2}, 盈利百分比: {3}'.format(common.get_curr_time_str(), newpriceitem.buy_price,\
                                                                                 curroderitem.coin, publicparameters.SELL_PROFIT_RATE))
@@ -299,6 +300,9 @@ class CoinTrans(object):
             orderitem.sell_date = common.get_curr_time_str()
             # 更新到DB
             ormmysql.updateorder(orderitem)
+            # remove to log table if sell status is closed
+            if order_status == const.ORDER_STATUS_CLOSED:
+                ormmysql.delorder(orderitem)
 
         return True
         pass
