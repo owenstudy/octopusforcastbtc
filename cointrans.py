@@ -283,9 +283,11 @@ class CoinTrans(object):
             orderitem = self.get_order_item(price_item)
             if orderitem is None:
                 return False
+            else:
+                trans_units = orderitem.buy_units
             # 卖出订单时检查买入订单的状态，如果没有买入成功则停止卖出，返回失败
             if orderitem.buy_status != const.ORDER_STATUS_CLOSED:
-                print('买入订单还没有成交，卖出取消!')
+                # print('买入订单还没有成交，卖出取消!')
                 return False
         # 交易的order_market
         order_market = self.order_market
