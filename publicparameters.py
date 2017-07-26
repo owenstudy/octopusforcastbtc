@@ -19,7 +19,7 @@ ROUNDING_PRICE={'doge': {'price': 5, 'unit': 0}, 'ltc': {'price': 2, 'unit': 2},
                 'eth': {'price': 1, 'unit': 8},  'dash': {'price': 1, 'unit': 8}
                 }
 # 取消订单的时间间隔, 单位秒
-CANCEL_DURATION = 600
+CANCEL_DURATION = 1800
 
 # each coin allow max percentage out of total open orders
 COIN_MAX_RATE_IN_OPEN_ORDERS=0.25

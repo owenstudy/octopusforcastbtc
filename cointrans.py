@@ -155,11 +155,12 @@ class CoinTrans(object):
     # TODO 这个功能还需要完善
     def cancle_ot_buy_order(self, duration):
         open_order_list = ormmysql.openorderlist()
-        curr_time = common.CommonFunction.get_curr_time()
+        curr_time = common.CommonFunction.get_curr_date()
         for curr_order_item in open_order_list:
             diff = curr_time - common.CommonFunction.strtotime(curr_order_item.buy_date)
+            diffseconds = diff.seconds
             # Only cancel the buy status =open
-            if diff >duration and curr_order_item.buy_status == const.ORDER_STATUS_OPEN:
+            if diffseconds >duration and curr_order_item.buy_status == const.ORDER_STATUS_OPEN:
                 cancel_status = self.order_market.cancelOrder(curr_order_item.buy_order_id, curr_order_item.coin)
                 if cancel_status == 'success':
                     curr_order_item.buy_status=const.ORDER_STATUS_CANCEL
@@ -337,11 +338,13 @@ if __name__ == '__main__':
     #
     #
     trans = CoinTrans('btc38')
-    trans.test_coin_trans()
+    # trans.test_coin_trans()
     #
     #
     pricebuffer = priceupdate.PriceBuffer('btc38', save_log_flag=False)
     priceitem = pricebuffer.getpriceitem('btc38', 'doge_cny')
+
+    trans.cancle_ot_buy_order(10)
     #
     # trans.cancle_ot_buy_order(50)
     # trans.sell_check()

@@ -410,6 +410,7 @@ class MonitorPrice(object):
                     # cointrans_data.cancle_ot_buy_order(publicparameters.CANCEL_DURATION)
 
                     cointrans_data.update_order_status()
+                    cointrans_data.cancle_ot_buy_order(publicparameters.CANCEL_DURATION)
                 if runtime % 100 == 0:
                     print('Run {0}, 目前还未完成的订单有:{1}'.format(runtime, ormmysql.openordercount()))
                     # 获取当前COIN中预测可以买入的列表

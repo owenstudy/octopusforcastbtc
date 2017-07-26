@@ -68,7 +68,7 @@ OrderItemTableLog = Table(
 
 # 创建数据库连接,MySQLdb连接方式
 # My laptop PC DB
-# mysql_db = create_engine('mysql+pymysql://coin:Windows2000@127.0.0.1:3306/coins')
+# mysql_db = create_engine('mysql+pymysql://coin:Windows2000@127.0.0.1:3306/coins', echo = False)
 # My home PC db
 mysql_db = create_engine('mysql+pymysql://coin:Windows2000@192.168.1.104:3306/coins')
 # 创建数据库连接，使用 mysql-connector-python连接方式
@@ -147,12 +147,13 @@ def recordtoorder(orderrecord,orderitem):
     orderitem.sell_status = orderrecord.sell_status
     # covert  json string to priceitem object
     priceitemstr = orderrecord.priceitem
-    # pricedate, coin,buy_price, buy_depth, sell_price, sell_depth)
-    priceitemdict = json.loads(priceitemstr)
-    priceitemobj = common.JSONObject(priceitemdict)
-    priceitem = priceupdate.PriceItem(priceitemobj.pricedate, priceitemobj.coin, priceitemobj.buy_price, priceitemobj.buy_depth, \
-            priceitemobj.sell_price, priceitemobj.sell_depth)
-    orderitem.priceitem = priceitem
+    if priceitemstr is not None:
+        # pricedate, coin,buy_price, buy_depth, sell_price, sell_depth)
+        priceitemdict = json.loads(priceitemstr)
+        priceitemobj = common.JSONObject(priceitemdict)
+        priceitem = priceupdate.PriceItem(priceitemobj.pricedate, priceitemobj.coin, priceitemobj.buy_price, priceitemobj.buy_depth, \
+                priceitemobj.sell_price, priceitemobj.sell_depth)
+        orderitem.priceitem = priceitem
 
     return orderitem
 
@@ -247,9 +248,9 @@ def openorderlist():
     orderlist = []
 
     # coin and buy_date is unique
-    for order in query.filter(or_(MapperOrder.sell_status=='open', MapperOrder.sell_status ==None)).all():
+    for orderrecord in query.filter(or_(MapperOrder.sell_status=='open', MapperOrder.sell_status == None)):
         orderitem = cointrans.OrderItem('x', 'y')
-        recordtoorder(order, orderitem)
+        recordtoorder(orderrecord, orderitem)
         orderlist.append(orderitem)
     return orderlist
 
@@ -272,9 +273,9 @@ def ormtest():
     saveorder(orderitem)
     # saveorderlog(orderitem)
     # updateorder(orderitem)
-    delorder(orderitem)
+    # delorder(orderitem)
     # openordercount()
-    # openorderlist()
+    openorderlist()
 
 
 
