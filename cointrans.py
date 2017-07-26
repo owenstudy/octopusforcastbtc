@@ -279,6 +279,8 @@ class CoinTrans(object):
         elif trans_type == const.TRANS_TYPE_SELL:
             # 卖出时查找已经存在的priceitem，并更新相应的状态
             orderitem = self.get_order_item(price_item)
+            if orderitem is None:
+                return False
             # 卖出订单时检查买入订单的状态，如果没有买入成功则停止卖出，返回失败
             if orderitem.buy_status != const.ORDER_STATUS_CLOSED:
                 return False
@@ -286,10 +288,19 @@ class CoinTrans(object):
         order_market = self.order_market
 
         # 提交订单
-        trans_order = order_market.submitOrder(coin_pair, trans_type, trans_price_rounding, \
-                                               trans_units)
-
-        # trans_order = self.simu_submit_order (coin_pair, trans_type, trans_price_rounding,\
+        if trans_type == const.TRANS_TYPE_SELL:
+            bal = order_market.getMyBalance(coin)
+            # 可能出现余额不足的情况
+            if bal > trans_units:
+                trans_order = order_market.submitOrder(coin_pair, trans_type, trans_price_rounding, trans_units)
+            # 余额不足的取消卖出交易
+            else:
+                orderitem.sell_status = const.ORDER_STATUS_CANCEL
+                ormmysql.updateorder(orderitem)
+                ormmysql.delorder(orderitem)
+                return False
+        else:
+            trans_order = order_market.submitOrder(coin_pair, trans_type, trans_price_rounding, trans_units)
         #     trans_units)
         # # 取得返回订单的信息
         order_id = trans_order.order_id
