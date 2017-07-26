@@ -395,7 +395,7 @@ class MonitorPrice(object):
 
         runtime = 0
         maxruntime = 10000
-        while (runtime<maxruntime):
+        while (True):
             time.sleep(5)
             for coin_pair in coin_list:
                 self.monitor_coin(market, coin_pair)
