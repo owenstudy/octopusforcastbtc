@@ -134,7 +134,7 @@ class CoinTrans(object):
                 orderitem.buy_status = order_status
                 ormmysql.updateorder(orderitem)
             if orderitem.sell_status == const.ORDER_STATUS_OPEN:
-                order_status = self.order_market.getOrderStatus(orderitem.buy_order_id, orderitem.priceitem.coin)
+                order_status = self.order_market.getOrderStatus(orderitem.sell_order_id, orderitem.priceitem.coin)
                 orderitem.sell_status = order_status
                 ormmysql.updateorder(orderitem)
                 if order_status == const.ORDER_STATUS_CLOSED:
