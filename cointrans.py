@@ -313,7 +313,7 @@ class CoinTrans(object):
             return False
         else:
             order_status = order_market.getOrderStatus(order_id, coin)
-        print('开始{0}交易,交易状态:{1}:{2},{3}, {4}'.format(trans_type, order_status, price_item.pricedate, price_item.coin, price_item.buy_price))
+        print('{0}:开始{1}交易,交易状态:{2}:{3},{4}, {5}'.format(common.get_curr_time_str(),trans_type, order_status, price_item.pricedate, price_item.coin, price_item.buy_price))
 
         # 保留交易时的相关信息到orderitem对象中
         if trans_type == const.TRANS_TYPE_BUY:

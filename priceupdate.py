@@ -306,7 +306,7 @@ class PriceBuffer(object):
                 if actual_profit_rate>self.sell_profit_rate:
                     priceitem.price_buy_forecast_verify=True
                     priceitem.price_buy_forecast_verify_date=common.get_curr_time_str()
-                    print('reverify result is correct: @%f'% newpriceitem.sell_price)
+                    print('Verified result is correct: @%f'% newpriceitem.sell_price)
                     priceinfo = self.__save_price(priceitem)
                     # 执行实际的卖出操作
                     trans_status = self.cointrans_handler.coin_trans(self.market, 'sell', newpriceitem.buy_price, priceitem)

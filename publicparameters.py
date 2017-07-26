@@ -11,7 +11,7 @@ import cointrans
 # 每次交易的金额， RMB
 TRANS_AMOUNT_PER_ORDER = 3
 # 最大的交易池，即同时存在的最大OPEN订单数量
-MAX_OPEN_ORDER_POOL = 100
+MAX_OPEN_ORDER_POOL = 170
 # 卖出交易的止盈百分比
 SELL_PROFIT_RATE = 0.012
 # 价格rounding的位数,包括价格和交易单元
