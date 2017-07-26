@@ -140,6 +140,10 @@ class CoinTrans(object):
                 if order_status == const.ORDER_STATUS_CLOSED:
                     # 把交易记录从交易表转移到LOG表
                     ormmysql.delorder(orderitem)
+            # the sell status is closed to move log table
+            if orderitem.sell_status == const.ORDER_STATUS_CLOSED:
+                # 把交易记录从交易表转移到LOG表
+                ormmysql.delorder(orderitem)
         pass
 
     '''取消超时买入订单，买入挂单超过指定的时间则取消'''

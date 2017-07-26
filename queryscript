@@ -1,0 +1,6 @@
+# query the closed transaction data
+ select trans_id,coin,sell_amount-buy_amount as profit_amount, buy_status,buy_price,buy_units,buy_amount,sell_status,sell_price,sell_amount from t_coin_trans_log;
+# query the outstanding transactiond data
+ select count(*) from t_coin_trans ;
+# check the detail of outstaning transactions
+ select trans_id, coin, buy_date, buy_status, buy_price, buy_amount, sell_status from t_coin_trans;
