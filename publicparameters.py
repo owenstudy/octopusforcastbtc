@@ -20,6 +20,12 @@ ROUNDING_PRICE={'doge': {'price': 5, 'unit': 0}, 'ltc': {'price': 2, 'unit': 2},
                 }
 # 取消订单的时间间隔, 单位秒
 CANCEL_DURATION = 600
+
+# each coin allow max percentage out of total open orders
+COIN_MAX_RATE_IN_OPEN_ORDERS=0.25
+
+
+# The following public parameters will not use now
 # 交易的公共对象，每次交易时都调用这个对象
 ORDER_LIST = []
 

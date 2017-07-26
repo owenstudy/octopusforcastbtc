@@ -84,6 +84,7 @@ class CoinTrans(object):
         # 订单状态
         const.ORDER_STATUS_OPEN = 'open'
         const.ORDER_STATUS_CLOSED = 'closed'
+        const.ORDER_STATUS_CANCEL = 'cancelled'
         const.TRANS_TYPE_BUY='buy'
         const.TRANS_TYPE_SELL='sell'
 
@@ -103,6 +104,9 @@ class CoinTrans(object):
     def sell_check(self):
         open_order_list = ormmysql.openorderlist()
         for curroderitem in open_order_list:
+            # The transaction of selling is in progress then check next
+            if curroderitem.sell_status ==const.ORDER_STATUS_OPEN:
+                continue
             pricebuffer = priceupdate.PriceBuffer(self.market, save_log_flag=False)
             # 获取当前的价格
             newpriceitem = pricebuffer.getpriceitem(self.market, curroderitem.coin+'_cny')
@@ -150,21 +154,20 @@ class CoinTrans(object):
     '''取消超时买入订单，买入挂单超过指定的时间则取消'''
     # TODO 这个功能还需要完善
     def cancle_ot_buy_order(self, duration):
-        open_trans_file_db = shelve.open(self.open_trans_file_db_name, writeback=True)
+        open_order_list = ormmysql.openorderlist()
         curr_time = common.CommonFunction.get_curr_time()
-        cancel_list = []
-        for item in open_trans_file_db.items():
-            curr_order_item = item[1]
-            diff = curr_time - curr_order_item.buy_date
-            if diff >duration:
+        for curr_order_item in open_order_list:
+            diff = curr_time - common.CommonFunction.strtotime(curr_order_item.buy_date)
+            # Only cancel the buy status =open
+            if diff >duration and curr_order_item.buy_status == const.ORDER_STATUS_OPEN:
                 cancel_status = self.order_market.cancelOrder(curr_order_item.buy_order_id, curr_order_item.coin)
                 if cancel_status == 'success':
-                    # 移除已经取消的订单
-                    cancel_list.append(curr_order_item[0])
+                    curr_order_item.buy_status=const.ORDER_STATUS_CANCEL
+                    # update the buy status
+                    ormmysql.updateorder(curr_order_item)
+                    # move the records to log table
+                    ormmysql.delorder(curr_order_item)
                     pass
-        for cancel_item in cancel_list:
-
-            del open_trans_file_db[cancel_item]
 
     # '''保存订单到数据库文件中以便查询'''
     # def save_order(self, orderitem, ordertype = 'new'):
@@ -188,14 +191,30 @@ class CoinTrans(object):
     #
 
     # 判断是不是满足买入或者卖出条件
-    def check_trans_indi(self):
+    def check_trans_indi(self, coin = None):
         # 总共的OPEN交易订单
         total_open_count = ormmysql.openordercount()
         if total_open_count >= publicparameters.MAX_OPEN_ORDER_POOL:
             return False
-
+        if coin is not None:
+            coin_rate = self.get_coin_rate_in_open_orders(coin)
+            if coin_rate > publicparameters.COIN_MAX_RATE_IN_OPEN_ORDERS:
+                return False
         return True
         pass
+    # coin percentage out of total allow open orders,
+    def get_coin_rate_in_open_orders(self, coin):
+        open_order_list = ormmysql.openorderlist()
+        total_count = ormmysql.openordercount()
+        coin_count = 0
+        for open_order in open_order_list:
+            if open_order.coin == coin:
+                coin_count = coin_count + 1
+        if total_count == 0:
+            rate =0
+        else:
+            rate = round(coin_count/total_count,2)
+        return rate
 
     # 交易测试
     def test_coin_trans(self):
@@ -233,13 +252,14 @@ class CoinTrans(object):
     @price_item     预测价格时的信息，用来进行对比
     '''
     def coin_trans(self, market, trans_type, trans_price, price_item):
-        # 判断是不是满足交易的条件，不满足则退出不进行交易
-        if trans_type == const.TRANS_TYPE_BUY:
-            if self.check_trans_indi() is False:
-                return False
-
         coin = price_item.coin
         coin_pair = coin+'_cny'
+
+        # 判断是不是满足交易的条件，不满足则退出不进行交易
+        if trans_type == const.TRANS_TYPE_BUY:
+            if self.check_trans_indi(coin) is False:
+                return False
+
         # 对价格和交易单位进行rounding，否则有可能造成调用接口失败
         rounding_price = publicparameters.rounding_price(coin)
         rounding_unit = publicparameters.rounding_unit(coin)
