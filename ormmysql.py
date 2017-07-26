@@ -67,9 +67,9 @@ OrderItemTableLog = Table(
 )
 
 # 创建数据库连接,MySQLdb连接方式
-# My home PC db
-# mysql_db = create_engine('mysql+pymysql://coin:Windows2000@127.0.0.1:3306/coins')
 # My laptop PC DB
+# mysql_db = create_engine('mysql+pymysql://coin:Windows2000@127.0.0.1:3306/coins')
+# My home PC db
 mysql_db = create_engine('mysql+pymysql://coin:Windows2000@192.168.1.104:3306/coins')
 # 创建数据库连接，使用 mysql-connector-python连接方式
 # 生成表
@@ -176,11 +176,19 @@ def saveorder(orderitem =None):
 # 保存一个新的order
 def saveorderlog(orderitem=None):
     try:
-        neworderrecord = MapperOrderLog()
+        neworderrecordlog = MapperOrderLog()
+        query = session.query(MapperOrder)
         # save to record to database
-        ordertorecord(orderitem, neworderrecord)
+        ordertorecord(orderitem, neworderrecordlog)
+        # Find the trans_id
+        x=query.filter_by(coin=orderitem.coin, buy_date =orderitem.buy_date).first()
+        trans_id = x.trans_id
+
+        # Get the trans_id from trans table
+        neworderrecordlog.trans_id = trans_id
+
         # submit order to db
-        session.add(neworderrecord)
+        session.add(neworderrecordlog)
         session.flush()
         session.commit()
 
@@ -214,8 +222,7 @@ def delorder(orderitem):
         # coin and buy_date is unique
         orderrecord=query.filter_by(coin=orderitem.coin, buy_date=orderitem.buy_date)
         # 删除之前备份到LOG表
-        querylog=session.query(MapperOrderLog)
-
+        saveorderlog(orderitem)
         # remove
         orderrecord.delete()
         # commit to db
@@ -262,12 +269,12 @@ def ormtest():
     #
     orderitem.priceitem = priceitem
 
-    # saveorder(orderitem)
+    saveorder(orderitem)
     # saveorderlog(orderitem)
     # updateorder(orderitem)
-    # delorder(orderitem)
-    openordercount()
-    openorderlist()
+    delorder(orderitem)
+    # openordercount()
+    # openorderlist()
 
 
 
