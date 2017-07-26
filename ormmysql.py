@@ -196,7 +196,7 @@ def saveorderlog(orderitem=None):
         return True
         pass
     except Exception as e:
-        print('Save to DB error:{0}'.format(str(e)))
+        print('Save to DB log error:{0}'.format(str(e)))
         return False
 
 

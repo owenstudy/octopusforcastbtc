@@ -146,9 +146,10 @@ class CoinTrans(object):
                     # 把交易记录从交易表转移到LOG表
                     ormmysql.delorder(orderitem)
             # the sell status is closed to move log table
-            if orderitem.sell_status == const.ORDER_STATUS_CLOSED:
-                # 把交易记录从交易表转移到LOG表
-                ormmysql.delorder(orderitem)
+            # 这里会导致出问题，出现上面更新后又再次删除的情况
+            # if orderitem.sell_status == const.ORDER_STATUS_CLOSED:
+            #     # 把交易记录从交易表转移到LOG表
+            #     ormmysql.delorder(orderitem)
         pass
 
     '''取消超时买入订单，买入挂单超过指定的时间则取消'''
@@ -259,6 +260,7 @@ class CoinTrans(object):
         # 判断是不是满足交易的条件，不满足则退出不进行交易
         if trans_type == const.TRANS_TYPE_BUY:
             if self.check_trans_indi(coin) is False:
+                print('{0}:不符合买入条件，可能是超过买入数量上限或者比例上限'.format(coin))
                 return False
 
         # 对价格和交易单位进行rounding，否则有可能造成调用接口失败
@@ -283,6 +285,7 @@ class CoinTrans(object):
                 return False
             # 卖出订单时检查买入订单的状态，如果没有买入成功则停止卖出，返回失败
             if orderitem.buy_status != const.ORDER_STATUS_CLOSED:
+                print('买入订单还没有成交，卖出取消!')
                 return False
         # 交易的order_market
         order_market = self.order_market
@@ -298,6 +301,7 @@ class CoinTrans(object):
                 orderitem.sell_status = const.ORDER_STATUS_CANCEL
                 ormmysql.updateorder(orderitem)
                 ormmysql.delorder(orderitem)
+                print('{0}:余额不足，已经取消订单'.format(coin))
                 return False
         else:
             trans_order = order_market.submitOrder(coin_pair, trans_type, trans_price_rounding, trans_units)
