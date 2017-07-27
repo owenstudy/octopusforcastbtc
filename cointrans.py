@@ -109,14 +109,19 @@ class CoinTrans(object):
                 continue
             pricebuffer = priceupdate.PriceBuffer(self.market, save_log_flag=False)
             # 获取当前的价格
+
             newpriceitem = pricebuffer.getpriceitem(self.market, curroderitem.coin+'_cny')
             if newpriceitem is not None and curroderitem.buy_status == const.ORDER_STATUS_CLOSED:
-                if newpriceitem.buy_price >= curroderitem.buy_price*(1+publicparameters.SELL_PROFIT_RATE):
-                    # 执行实际的卖出操作
-                    trans_status = self.coin_trans(self.market, 'sell', newpriceitem.buy_price, curroderitem.priceitem)
-
-                    if trans_status is True:
-                        pass
+                # 测试，卖单提前生成好，等待直接成效
+                rounding_num = publicparameters.rounding_unit(curroderitem.coin)
+                default_sell_price = round(curroderitem.buy_price*(1+publicparameters.SELL_PROFIT_RATE),rounding_num)
+                trans_status = self.coin_trans(self.market, 'sell', default_sell_price, curroderitem.priceitem)
+                # if newpriceitem.buy_price >= curroderitem.buy_price*(1+publicparameters.SELL_PROFIT_RATE):
+                #     # 执行实际的卖出操作
+                #     trans_status = self.coin_trans(self.market, 'sell', newpriceitem.buy_price, curroderitem.priceitem)
+                #
+                #     if trans_status is True:
+                #         pass
                         # print('{0}:已经成功卖出,价格:{1}, coin: {2}, 盈利百分比: {3}'.format(common.get_curr_time_str(), newpriceitem.buy_price,\
                         #                                                         curroderitem.coin, publicparameters.SELL_PROFIT_RATE))
 
@@ -146,7 +151,11 @@ class CoinTrans(object):
                 if order_status == const.ORDER_STATUS_CLOSED:
                     # 把交易记录从交易表转移到LOG表
                     ormmysql.delorder(orderitem)
-            # the sell status is closed to move log table
+                    profit_amount = orderitem.sell_amount - orderitem.buy_amount
+                    print('{0}:[{1}]已经成功交易,盈利{2}！ BuyPrice:{3}, SellPrice:{4}, ProfiteRate:{5}'.format(\
+                            common.get_curr_time_str(), orderitem.priceitem.coin, profit_amount, orderitem.buy_price, orderitem.sell_price,publicparameters.SELL_PROFIT_RATE))
+
+                    # the sell status is closed to move log table
             # 这里会导致出问题，出现上面更新后又再次删除的情况
             # if orderitem.sell_status == const.ORDER_STATUS_CLOSED:
             #     # 把交易记录从交易表转移到LOG表

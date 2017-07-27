@@ -9,11 +9,11 @@ import urlaccess, json
 '''系统运行时需要用到的一些参数'''
 
 # 每次交易的金额， RMB
-TRANS_AMOUNT_PER_ORDER = 3
+TRANS_AMOUNT_PER_ORDER = 5
 # 最大的交易池，即同时存在的最大OPEN订单数量
-MAX_OPEN_ORDER_POOL = 170
+MAX_OPEN_ORDER_POOL = 100
 # 卖出交易的止盈百分比
-SELL_PROFIT_RATE = 0.012
+SELL_PROFIT_RATE = 0.015
 # 价格rounding的位数,包括价格和交易单元
 # ROUNDING_PRICE={'doge': {'price': 5, 'unit': 0}, 'ltc': {'price': 2, 'unit': 2}, 'btc': {'price': 1, 'unit': 5}, \
 #                 'eth': {'price': 1, 'unit': 8},  'dash': {'price': 1, 'unit': 8}
@@ -38,6 +38,7 @@ CLOSED_TRANS_FILE = 'closed_trans_file'
 
 
 # Get rounding setting data
+# 从网站获取所有的COIN价格信息，从价格信息中取得价格和交易单元的小数位
 def get_rounding_setting(market):
     pricedata = urlaccess.get_content('http://api.btc38.com/v1/ticker.php?c=all&mk_type=cny')
     # 返回的字节转换成字符串

@@ -427,8 +427,8 @@ class MonitorPrice(object):
                     if len(forecast_list) > 0:
                         print('%s: verified:%d, total:%d for coin:%s'\
                               %(common.CommonFunction.get_curr_time(), verified_count, len(forecast_list), coin_pair))
-        # 把预测中的列表输出出来
-        sorted_forecast_list = self.output_forecast_list(market, coin_list)
+                    # 把预测中的列表输出出来
+                    sorted_forecast_list = self.output_forecast_list(market, coin_list)
         return sorted_forecast_list
         pass
 
