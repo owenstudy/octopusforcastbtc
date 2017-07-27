@@ -346,8 +346,10 @@ class PriceBuffer(object):
             sell_depth=0
             priceitem=None
             coin=coin_pair.split('_')[0]
-            buy_price=price_depth.buy[0][0]
-            sell_price=price_depth.sell[0][0]
+            # use the sell price as buy_price
+            buy_price=price_depth.sell[0][0]
+            # use the buy orderprice as sell price
+            sell_price=price_depth.buy[0][0]
             # 尝试列表中所有的买入和
             for buy_item in price_depth.buy:
                 buy_depth=buy_depth+buy_item[1]
