@@ -309,10 +309,11 @@ class PriceBuffer(object):
                     print('Verified result is correct: @%f'% newpriceitem.sell_price)
                     priceinfo = self.__save_price(priceitem)
                     # 执行实际的卖出操作
-                    trans_status = self.cointrans_handler.coin_trans(self.market, 'sell', newpriceitem.buy_price, priceitem)
-                    trans_comments = "{0} -->Done: sell status: {1}:@{2}"
+                    # sell to process in sell_check for all transaction
+                    # trans_status = self.cointrans_handler.coin_trans(self.market, 'sell', newpriceitem.buy_price, priceitem)
+                    trans_comments = "{0} -->Done: Verified Date: {1}"
                     # 打印出交易信息
-                    print(trans_comments.format(priceinfo, trans_status, common.get_curr_time_str()))
+                    print(trans_comments.format(priceinfo, common.get_curr_time_str()))
                     # print(priceinfo+'-->Done: trans status: @%s'%common.CommonFunction.get_curr_time())
                 else:
                     priceitem.price_buy_forecast_verify=False
@@ -396,12 +397,12 @@ class MonitorPrice(object):
         runtime = 0
         maxruntime = 10000
         while (True):
-            time.sleep(5)
+            time.sleep(2)
             for coin_pair in coin_list:
                 self.monitor_coin(market, coin_pair)
                 runtime = runtime + 1
                 # 很运行10次检查一下交易的状态
-                if runtime % 10 == 0:
+                if runtime % 2 == 0:
                     cointrans_data = cointrans.CoinTrans(market)
                     # print(len(publicparameters.ORDER_LIST))
                     # 对OPEN订单进行卖出检查

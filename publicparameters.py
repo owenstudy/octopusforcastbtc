@@ -22,7 +22,7 @@ ROUNDING_PRICE={'doge': {'price': 5, 'unit': 0}, 'ltc': {'price': 2, 'unit': 2},
 CANCEL_DURATION = 1800
 
 # each coin allow max percentage out of total open orders
-COIN_MAX_RATE_IN_OPEN_ORDERS=0.25
+COIN_MAX_RATE_IN_OPEN_ORDERS=0.35
 
 
 # The following public parameters will not use now
