@@ -61,7 +61,7 @@ class PriceBuffer(object):
         # 买入指数判断的时间范围，初始为按1小时内的价格进行判断,单位为秒
         # self.__PRICE_TREND_RANGE=3600
         # 价格buffer中保存的最大的价格记录数
-        self.__PRICE_BUFF_MAX=2000
+        self.__PRICE_BUFF_MAX=4000
         # 止盈卖出的比例，用来确认预测买入的是不是符合要求
         self.sell_profit_rate = 0.009
         #
@@ -427,6 +427,7 @@ class MonitorPrice(object):
                     if len(forecast_list) > 0:
                         print('%s: verified:%d, total:%d for coin:%s'\
                               %(common.CommonFunction.get_curr_time(), verified_count, len(forecast_list), coin_pair))
+                if runtime % 1000 == 0:
                     # 把预测中的列表输出出来
                     sorted_forecast_list = self.output_forecast_list(market, coin_list)
         return sorted_forecast_list
