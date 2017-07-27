@@ -402,7 +402,7 @@ class MonitorPrice(object):
                 self.monitor_coin(market, coin_pair)
                 runtime = runtime + 1
                 # 很运行10次检查一下交易的状态
-                if runtime % 2 == 0:
+                if runtime % 10 == 0:
                     cointrans_data = cointrans.CoinTrans(market)
                     # print(len(publicparameters.ORDER_LIST))
                     # 对OPEN订单进行卖出检查
