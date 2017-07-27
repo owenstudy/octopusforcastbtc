@@ -13,7 +13,7 @@ TRANS_AMOUNT_PER_ORDER = 2
 # 最大的交易池，即同时存在的最大OPEN订单数量
 MAX_OPEN_ORDER_POOL = 300
 # 卖出交易的止盈百分比
-SELL_PROFIT_RATE = 0.015
+SELL_PROFIT_RATE = 0.012
 # 价格rounding的位数,包括价格和交易单元
 # ROUNDING_PRICE={'doge': {'price': 5, 'unit': 0}, 'ltc': {'price': 2, 'unit': 2}, 'btc': {'price': 1, 'unit': 5}, \
 #                 'eth': {'price': 1, 'unit': 8},  'dash': {'price': 1, 'unit': 8}
