@@ -116,8 +116,9 @@ class CoinTrans(object):
                     trans_status = self.coin_trans(self.market, 'sell', newpriceitem.buy_price, curroderitem.priceitem)
 
                     if trans_status is True:
-                        print('{0}:已经成功卖出,价格:{1}, coin: {2}, 盈利百分比: {3}'.format(common.get_curr_time_str(), newpriceitem.buy_price,\
-                                                                                curroderitem.coin, publicparameters.SELL_PROFIT_RATE))
+                        pass
+                        # print('{0}:已经成功卖出,价格:{1}, coin: {2}, 盈利百分比: {3}'.format(common.get_curr_time_str(), newpriceitem.buy_price,\
+                        #                                                         curroderitem.coin, publicparameters.SELL_PROFIT_RATE))
 
     '''查询已经存在的orderitem, 并返回'''
     def get_order_item(self, priceitem):
@@ -315,7 +316,6 @@ class CoinTrans(object):
             return False
         else:
             order_status = order_market.getOrderStatus(order_id, coin)
-        print('{0}:开始{1}交易,交易状态:{2}:{3},{4}, {5}'.format(common.get_curr_time_str(),trans_type, order_status, price_item.pricedate, price_item.coin, price_item.buy_price))
 
         # 保留交易时的相关信息到orderitem对象中
         if trans_type == const.TRANS_TYPE_BUY:
@@ -329,6 +329,9 @@ class CoinTrans(object):
             # 买入时新增加一个订单，卖出时则直接更新已经存在的订单
             # 保存数据到DB
             ormmysql.saveorder(orderitem)
+            print('{0}:开始[{1}]交易,交易状态:{2}:PriceDate:{3},Coin:{4}, BuyPrice:{5}'.format(common.get_curr_time_str(), trans_type, order_status,
+                                                               price_item.pricedate, price_item.coin,
+                                                               price_item.buy_price))
         elif trans_type == const.TRANS_TYPE_SELL:
             orderitem.sell_order_id = order_id
             orderitem.sell_status = order_status
@@ -336,6 +339,9 @@ class CoinTrans(object):
             orderitem.sell_amount = round(trans_units * trans_price_rounding, 2)
             orderitem.sell_units = trans_units
             orderitem.sell_date = common.get_curr_time_str()
+            print('{0}:开始[{1}]交易,交易状态:{2}:PriceDate:{3},Coin:{4}, BuyPrice:{5}, SellPrice:{6}, ProfiteRate:{7}'.format(common.get_curr_time_str(), trans_type, order_status,
+                                                               price_item.pricedate, price_item.coin,
+                                                               price_item.buy_price, orderitem.sell_price, publicparameters.SELL_PROFIT_RATE))
             # 更新到DB
             ormmysql.updateorder(orderitem)
             # remove to log table if sell status is closed
