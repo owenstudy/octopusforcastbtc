@@ -147,8 +147,10 @@ class PriceBuffer(object):
             # 执行买入操作
             verified_rate = self.get_forecast_rate()
             # 只有校验成功率超过一定比例才进行买入操作
-            if verified_rate>0.2:
+            if verified_rate>0.1:
                 self.cointrans_handler.coin_trans(self.market, 'buy', priceitem.buy_price, priceitem)
+            elif verified_rate>0:
+                print('{0}: verified rate:{1}'.format(priceitem.coin, verified_rate))
         # 对最近一次的价格进行校验，判断最后一次的价格的预测买入是不是正确
         self.buyforecast_verify(priceitem)
         # 把最新的价格加入BUFFER列表中
