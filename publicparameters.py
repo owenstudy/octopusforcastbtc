@@ -4,9 +4,40 @@
 __author__ = 'Owen_Study/owen_study@126.com'
 # Create date: 17-7-19 下午9:08
 
-import urlaccess, json
+import urlaccess, json,common
 
 '''系统运行时需要用到的一些参数'''
+
+
+# 从JSON字符串中取得数据库配置信息
+def get_db_string():
+    # 从参数表读取参数
+    configf = open("config")
+    configstr = ''
+    for line in configf.readlines():
+        configstr = configstr + line
+
+    # 配置文件的JSON数据对象
+    configjson = json.loads(configstr)
+
+    databasestr = configjson.get('database')
+    dbconnstr = None
+    try:
+        ipaddress = databasestr.get('ip')
+        port =  databasestr.get('port')
+        dbnamestr = databasestr.get('dbname')
+        username = databasestr.get('username')
+        password = databasestr.get('password')
+
+        # 'mysql+pymysql://coin:Windows2000@192.168.1.104:3306/coins'
+        dbconnstr= 'mysql+pymysql://{user}:{pwd}@{ip}:{port}/{dbname}'.format(user=username, pwd=password,\
+                                                                                ip=ipaddress, port=port, dbname = dbnamestr)
+        print('当前运行的DB是:{0}'.format(dbconnstr))
+    except Exception as e:
+        print('get db string error:'+str(e))
+        dbconnstr='error'
+    finally:
+        return dbconnstr
 
 # 每次交易的金额， RMB
 TRANS_AMOUNT_PER_ORDER = 2
@@ -100,6 +131,8 @@ def rounding_unit(coin):
         return rounding_data.get('unit', 2)
 
 if __name__ == '__main__':
+    get_db_string()
+    print(DBSTRING)
     # get_rounding_setting('doge')
     x = rounding_price('btc')
     y = rounding_unit('btc')
