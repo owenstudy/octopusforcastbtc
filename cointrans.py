@@ -147,8 +147,11 @@ class CoinTrans(object):
             if orderitem.sell_status == const.ORDER_STATUS_OPEN:
                 order_status = self.order_market.getOrderStatus(orderitem.sell_order_id, orderitem.priceitem.coin)
                 orderitem.sell_status = order_status
+                orderitem.sell_date = common.get_curr_time_str()
                 ormmysql.updateorder(orderitem)
                 if order_status == const.ORDER_STATUS_CLOSED:
+                    orderitem.sell_date = common.get_curr_time_str()
+                    ormmysql.updateorder(orderitem)
                     # 把交易记录从交易表转移到LOG表
                     ormmysql.delorder(orderitem)
                     profit_amount = round(orderitem.sell_amount - orderitem.buy_amount,3)

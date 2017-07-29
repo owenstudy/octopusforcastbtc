@@ -480,36 +480,39 @@ class MonitorPrice(object):
         while (True):
             time.sleep(5)
             for coin_pair in coin_list:
-                self.monitor_coin(market, coin_pair)
-                runtime = runtime + 1
-                # 很运行10次检查一下交易的状态
-                if runtime % 10 == 0:
-                    cointrans_data = cointrans.CoinTrans(market)
-                    # print(len(publicparameters.ORDER_LIST))
-                    # 对OPEN订单进行卖出检查
-                    cointrans_data.sell_check()
-                    # 对超时的买单取消
-                    # cointrans_data.cancle_ot_buy_order(publicparameters.CANCEL_DURATION)
+                try:
+                    self.monitor_coin(market, coin_pair)
+                    runtime = runtime + 1
+                    # 很运行10次检查一下交易的状态
+                    if runtime % 10 == 0:
+                        cointrans_data = cointrans.CoinTrans(market)
+                        # print(len(publicparameters.ORDER_LIST))
+                        # 对OPEN订单进行卖出检查
+                        cointrans_data.sell_check()
+                        # 对超时的买单取消
+                        # cointrans_data.cancle_ot_buy_order(publicparameters.CANCEL_DURATION)
 
-                    cointrans_data.update_order_status()
-                    cointrans_data.cancle_ot_buy_order(publicparameters.CANCEL_DURATION)
-                if runtime % 100 == 0:
-                    print('Run {0}, 目前还未完成的订单有:{1}'.format(runtime, ormmysql.openordercount()))
-                    # 获取当前COIN中预测可以买入的列表
-                    forecast_list = self.__pricebuffer_list.get(coin_pair).price_forecast_list
-                    verified_count = 0
-                    # 判断当前预测的列表中哪些达到了预期的盈利目标
-                    for forecast_item in forecast_list:
-                        if forecast_item.price_buy_forecast_verify is True:
-                            verified_count = verified_count + 1
-                    # 输出每个COIN中预测的情况，多少达到了预期盈利
-                    if len(forecast_list) > 0:
-                        print('%s: verified:%d, total:%d for coin:%s'\
-                              %(common.CommonFunction.get_curr_time(), verified_count, len(forecast_list), coin_pair))
-                if runtime % 1000 == 0:
-                    # 把预测中的列表输出出来
-                    sorted_forecast_list = self.output_forecast_list(market, coin_list)
-        return sorted_forecast_list
+                        cointrans_data.update_order_status()
+                        cointrans_data.cancle_ot_buy_order(publicparameters.CANCEL_DURATION)
+                    if runtime % 100 == 0:
+                        print('Run {0}, 目前还未完成的订单有:{1}'.format(runtime, ormmysql.openordercount()))
+                        # 获取当前COIN中预测可以买入的列表
+                        forecast_list = self.__pricebuffer_list.get(coin_pair).price_forecast_list
+                        verified_count = 0
+                        # 判断当前预测的列表中哪些达到了预期的盈利目标
+                        for forecast_item in forecast_list:
+                            if forecast_item.price_buy_forecast_verify is True:
+                                verified_count = verified_count + 1
+                        # 输出每个COIN中预测的情况，多少达到了预期盈利
+                        if len(forecast_list) > 0:
+                            print('%s: verified:%d, total:%d for coin:%s'\
+                                  %(common.CommonFunction.get_curr_time(), verified_count, len(forecast_list), coin_pair))
+                    if runtime % 1000 == 0:
+                        # 把预测中的列表输出出来
+                        sorted_forecast_list = self.output_forecast_list(market, coin_list)
+                except Exception as e:
+                    print('处理{0}时出现错误:{1}'.format(coin_pair, str(e)))
+        # return sorted_forecast_list
         pass
 
     '''排序输出推荐买入列表的总体情况'''
