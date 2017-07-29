@@ -70,9 +70,9 @@ OrderItemTableLog = Table(
 # My laptop PC DB
 # mysql_db = create_engine('mysql+pymysql://coin:Windows2000@127.0.0.1:3306/coins', echo = False)
 # My home PC db
-mysql_db = create_engine('mysql+pymysql://coin:Windows2000@192.168.1.104:3306/coins')
-# connstr = publicparameters.get_db_string()
-# mysql_db = create_engine(connstr)
+# mysql_db = create_engine('mysql+pymysql://coin:Windows2000@192.168.1.104:3306/coins')
+connstr = publicparameters.get_db_string()
+mysql_db = create_engine(connstr)
 # 创建数据库连接，使用 mysql-connector-python连接方式
 # 生成表
 metadata.create_all(mysql_db)

@@ -52,6 +52,8 @@ class PriceBuffer(object):
         self.market = market
         # 初始化常用的常量值
         self.__initconst()
+        # 暂停开始时间
+        self.__pause_start_time = None
 
         # 设置影响判断条件的公共参数
         # 上升趋势时，价格深度比较强的百分比
@@ -61,9 +63,11 @@ class PriceBuffer(object):
         # 买入指数判断的时间范围，初始为按1小时内的价格进行判断,单位为秒
         # self.__PRICE_TREND_RANGE=3600
         # 价格buffer中保存的最大的价格记录数
-        self.__PRICE_BUFF_MAX=4000
+        self.__PRICE_BUFF_MAX=2000
         # 止盈卖出的比例，用来确认预测买入的是不是符合要求
-        self.sell_profit_rate = 0.009
+        # self.sell_profit_rate = 0.009
+        # 默认的买入间隔，在50％之前
+        self.__DEFAULT_BUY_PAUSE_SECONDS = 60
         #
 
         # 买入的标准指数
@@ -113,7 +117,6 @@ class PriceBuffer(object):
         self.__BUY_INDEX_STANDARD=buy_index_standard
 
     '''得到预测列表中的校验正确的比例,买入时参考这一比例'''
-
     def get_forecast_rate(self):
         # 判断当前预测的列表中哪些达到了预期的盈利目标
         verified_count = 0
@@ -129,6 +132,74 @@ class PriceBuffer(object):
             rate = verified_count / len(forecast_list)
 
         return rate
+    '''增加到达最大容量的限制，如果POOL池比例已经到达60％，则每次买入暂停一段时间，以确保不会在最快的时间把POOL用完，不能持续进行'''
+    def get_pause_seconds(self, priceitem):
+        # 当前已经存在的OPEN记录
+        opencount = ormmysql.openordercount()
+        # opencount = 51
+        # POOL的比例
+        pool_used_rate = round(opencount/ publicparameters.MAX_OPEN_ORDER_POOL,2)
+        pause_seconds = 0
+        # 超过50％后每增加一个百分比，则暂停1分钟，每前进10％则暂停1小时
+        if pool_used_rate >= 0.9:
+            # 暂停的秒数
+            pause_seconds = 300*3
+        elif pool_used_rate >= 0.8:
+            pause_seconds = 240*3
+        elif pool_used_rate >= 0.7:
+            pause_seconds = 180*3
+        elif pool_used_rate >= 0.6:
+            pause_seconds = 120*3
+        elif pool_used_rate >= 0.5:
+            pause_seconds = 60*3
+        else:
+            # 50％之前每买入一次10秒后再进行买入
+            pause_seconds = self.__DEFAULT_BUY_PAUSE_SECONDS
+        return pause_seconds
+    '''买入检查'''
+    def buycheck(self,priceitem):
+        # 暂停时间，买入时检查POOL的比例是不是超过一定的比例，会暂停以便平均分布
+        pause_seconds = self.get_pause_seconds(priceitem)
+        checkresult = False
+        pauseresult = False
+        verified_rate = self.get_forecast_rate()
+        # 只有校验成功率超过一定比例才进行买入操作
+        if verified_rate > 0.1:
+            checkresult = True
+        else:
+            checkresult = False
+            return checkresult
+
+        # 只有通过上面的预测比例后才进行比例的检查
+        # 只有第一次通过预测验证后开始进入买入暂停阶段，本次买入成交
+        if self.__pause_start_time is None:
+            checkresult = True
+        else:
+            checkresult = False
+
+        if self.__pause_start_time is None and pause_seconds > 0:
+            # 暂停开始时间，只设置一次，然后开始检查，直到暂停结果
+            self.__pause_start_time = datetime.datetime.now()
+            if pause_seconds>self.__DEFAULT_BUY_PAUSE_SECONDS:
+                print('{0}: {1}买入暂停，由于超过一半的比例，暂停{2}秒!'.format(common.get_curr_time_str(), priceitem.coin, pause_seconds))
+        if self.__pause_start_time is not None:
+            currtime = datetime.datetime.now()
+            diff = currtime - self.__pause_start_time
+            diffseconds = diff.seconds
+            if diffseconds > pause_seconds:
+                # 暂停结束
+                self.__pause_start_time = None
+                pauseresult = True
+                if pause_seconds > self.__DEFAULT_BUY_PAUSE_SECONDS:
+                    print('{0}: {1}买入暂停结束，共暂停{2}秒!'.format(common.get_curr_time_str(), priceitem.coin, pause_seconds))
+
+        if pauseresult is True:
+            checkresult = True
+        # else:
+        #     checkresult = False
+
+        return checkresult
+        pass
 
     '''更新BUFFER里面的订单状态'''
     '''增加新的价格列表'''
@@ -146,12 +217,13 @@ class PriceBuffer(object):
             self.price_forecast_list.append(priceitem)
             # 执行买入操作
             verified_rate = self.get_forecast_rate()
-            # 只有校验成功率超过一定比例才进行买入操作
-            if verified_rate>0.1:
-                self.cointrans_handler.coin_trans(self.market, 'buy', priceitem.buy_price, priceitem)
-            elif verified_rate>0:
+            if verified_rate > 0:
                 print('{0}: verified rate:{1}'.format(priceitem.coin, verified_rate))
-        # 对最近一次的价格进行校验，判断最后一次的价格的预测买入是不是正确
+            # 买入检查，看是不是可以买入
+            checkresult = self.buycheck(priceitem)
+            if checkresult is True:
+                self.cointrans_handler.coin_trans(self.market, 'buy', priceitem.buy_price, priceitem)
+            # 对最近一次的价格进行校验，判断最后一次的价格的预测买入是不是正确
         self.buyforecast_verify(priceitem)
         # 把最新的价格加入BUFFER列表中
         self.price_buffer.append(priceitem)
@@ -265,7 +337,7 @@ class PriceBuffer(object):
             endtime=self.basetime
             # endtime=common.CommonFunction.strtotime('2017-07-16 23:08:31')
         starttime=endtime-datetime.timedelta(seconds=duration)
-        # 在指定时间内所有价格的买入趋势占总体的比例,0~2之间的数字
+        # 在指定时间内所有价格的买入趋势占总体的比例,0~2之间的数字，加入预测因子后变成了0－3之间的数字
         total_buy_times=0
         total_price_number=0
         for priceitem in self.price_buffer:
@@ -276,10 +348,15 @@ class PriceBuffer(object):
                     total_buy_times=total_buy_times+2
                 elif priceitem.price_trend_buy==const.PRICE_TREND_BUY_NORMAL:
                     total_buy_times=total_buy_times+1
+        # 增加预测准确性的比例因子
+        verified_pass_rate = self.get_forecast_rate()
+
         if total_price_number==0:
             buy_index=0
         else:
             buy_index=total_buy_times/total_price_number
+            # 预测准备性作为买入指数的一半权重进行计算
+            buy_index = buy_index * (1+verified_pass_rate*0.5)
         return round(buy_index,2)
 
     # 买入预估结果，True 买入，False不买入
@@ -304,11 +381,11 @@ class PriceBuffer(object):
                 if priceitem.price_buy_forecast_verify is True or priceitem.price_buy_forecast is False:
                     continue
                 actual_profit_rate=(newpriceitem.buy_price-priceitem.buy_price)/priceitem.buy_price
-                # 达到卖出条件则认为预测成功
-                if actual_profit_rate>self.sell_profit_rate:
+                # 达到卖出条件则认为预测成功,预测价格变化是实际的一定比例，如0.8
+                if actual_profit_rate>publicparameters.SELL_PROFIT_RATE*0.8:
                     priceitem.price_buy_forecast_verify=True
                     priceitem.price_buy_forecast_verify_date=common.get_curr_time_str()
-                    print('Verified result is correct: @%f'% newpriceitem.sell_price)
+                    print('Verified result is correct: @%f'% newpriceitem.buy_price)
                     priceinfo = self.__save_price(priceitem)
                     # 执行实际的卖出操作
                     # sell to process in sell_check for all transaction
@@ -452,9 +529,10 @@ class MonitorPrice(object):
 
         print('---------------------final resut:--------------------')
         for forecast_item in sorted_forecast_list:
-            print('%s: coin:%s, verified:%d, total:%d, rate:%f' \
-                  % (common.CommonFunction.get_curr_time(), forecast_item.get('coin'), \
-                     forecast_item.get('verified'), forecast_item.get('total'), forecast_item.get('rate') ))
+            if forecast_item.get('rate') > 0:
+                print('%s: coin:%s, verified:%d, total:%d, rate:%f' \
+                      % (common.CommonFunction.get_curr_time(), forecast_item.get('coin'), \
+                         forecast_item.get('verified'), forecast_item.get('total'), forecast_item.get('rate') ))
             pass
         return sorted_forecast_list
     '''测试一段时间内的最优的可用币种列表'''
@@ -501,7 +579,12 @@ if __name__ == '__main__':
     # order_market=ordermanage.OrderManage('btc38')
     # price_depth=order_market.getMarketDepth('doge_cny')
     #
-    # pricebuffer=PriceBuffer()
+    # pricebuffer=PriceBuffer('btc38')
+    # pricebuffer.get_pause_seconds(priceitem)
+    # buyindi = False
+    # while(not buyindi):
+    #     buyindi = pricebuffer.buycheck()
+    #     time.sleep(1)
     #
     # pricebuffer.monitor_coin_list('btc38',['doge_cny','btc_cny', 'ltc_cny'])
     # runtime=0

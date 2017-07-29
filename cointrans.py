@@ -151,9 +151,10 @@ class CoinTrans(object):
                 if order_status == const.ORDER_STATUS_CLOSED:
                     # 把交易记录从交易表转移到LOG表
                     ormmysql.delorder(orderitem)
-                    profit_amount = orderitem.sell_amount - orderitem.buy_amount
-                    print('{0}:[{1}]已经成功交易,盈利{2}！ BuyPrice:{3}, SellPrice:{4}, ProfiteRate:{5}'.format(\
-                            common.get_curr_time_str(), orderitem.priceitem.coin, profit_amount, orderitem.buy_price, orderitem.sell_price,publicparameters.SELL_PROFIT_RATE))
+                    profit_amount = round(orderitem.sell_amount - orderitem.buy_amount,3)
+                    print('{0}:[{1}]{smile}已经成功交易,盈利{2}！ BuyPrice:{3}, SellPrice:{4}, ProfiteRate:{5}'.format(\
+                            common.get_curr_time_str(), orderitem.priceitem.coin, profit_amount, orderitem.buy_price, orderitem.sell_price,\
+                            publicparameters.SELL_PROFIT_RATE, smile='^_^ '*5))
 
                     # the sell status is closed to move log table
             # 这里会导致出问题，出现上面更新后又再次删除的情况
@@ -203,13 +204,14 @@ class CoinTrans(object):
     #
 
     # 判断是不是满足买入或者卖出条件
-    def check_trans_indi(self, coin = None):
+    def check_trans_indi(self, coin=None):
         # 总共的OPEN交易订单
         total_open_count = ormmysql.openordercount()
         if total_open_count >= publicparameters.MAX_OPEN_ORDER_POOL:
             return False
         if coin is not None:
             coin_rate = self.get_coin_rate_in_open_orders(coin)
+            # 大于单个COIN在总的OPEN数量中允许的最大比例
             if coin_rate > publicparameters.COIN_MAX_RATE_IN_OPEN_ORDERS:
                 return False
         return True
@@ -217,7 +219,9 @@ class CoinTrans(object):
     # coin percentage out of total allow open orders,
     def get_coin_rate_in_open_orders(self, coin):
         open_order_list = ormmysql.openorderlist()
-        total_count = ormmysql.openordercount()
+        # total_count = ormmysql.openordercount()
+        # 用POOL的最大值来检查单个币种的比例
+        total_count = publicparameters.MAX_OPEN_ORDER_POOL
         coin_count = 0
         for open_order in open_order_list:
             if open_order.coin == coin:

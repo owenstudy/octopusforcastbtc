@@ -8,9 +8,8 @@ import urlaccess, json,common
 
 '''系统运行时需要用到的一些参数'''
 
-
-# 从JSON字符串中取得数据库配置信息
-def get_db_string():
+'''取得配置文件内容,返回json字符串'''
+def get_config_content():
     # 从参数表读取参数
     configf = open("config")
     configstr = ''
@@ -19,6 +18,15 @@ def get_db_string():
 
     # 配置文件的JSON数据对象
     configjson = json.loads(configstr)
+
+    return configjson
+
+
+# 从JSON字符串中取得数据库配置信息
+def get_db_string():
+    # 从参数表读取参数
+    # 配置文件的JSON数据对象
+    configjson = get_config_content()
 
     databasestr = configjson.get('database')
     dbconnstr = None
@@ -39,10 +47,12 @@ def get_db_string():
     finally:
         return dbconnstr
 
+
+
 # 每次交易的金额， RMB
 TRANS_AMOUNT_PER_ORDER = 2
 # 最大的交易池，即同时存在的最大OPEN订单数量
-MAX_OPEN_ORDER_POOL = 300
+MAX_OPEN_ORDER_POOL = 20
 # 卖出交易的止盈百分比
 SELL_PROFIT_RATE = 0.012
 # 价格rounding的位数,包括价格和交易单元
@@ -56,7 +66,24 @@ CANCEL_DURATION = 1800
 # each coin allow max percentage out of total open orders
 COIN_MAX_RATE_IN_OPEN_ORDERS=0.35
 
+'''从配置文件中取到一些具体的参数'''
+def set_other_run_parameters():
+    # 配置文件的JSON数据对象
+    configjson = get_config_content()
+    runconfig = configjson.get('transaction')
+    global TRANS_AMOUNT_PER_ORDER
+    TRANS_AMOUNT_PER_ORDER = runconfig.get('TRANS_AMOUNT_PER_ORDER', 5)
+    global MAX_OPEN_ORDER_POOL
+    MAX_OPEN_ORDER_POOL = runconfig.get('MAX_OPEN_ORDER_POOL', 100)
+    global SELL_PROFIT_RATE
+    SELL_PROFIT_RATE = runconfig.get('SELL_PROFIT_RATE', 0.012)
+    global CANCEL_DURATION
+    CANCEL_DURATION = runconfig.get('CANCEL_DURATION', 1800)
+    global COIN_MAX_RATE_IN_OPEN_ORDERS
+    COIN_MAX_RATE_IN_OPEN_ORDERS = runconfig.get('COIN_MAX_RATE_IN_OPEN_ORDERS')
 
+# 从配置文件读取配置数据并放到全书变量中运行时需要使用
+set_other_run_parameters()
 # The following public parameters will not use now
 # 交易的公共对象，每次交易时都调用这个对象
 ORDER_LIST = []
@@ -132,7 +159,6 @@ def rounding_unit(coin):
 
 if __name__ == '__main__':
     get_db_string()
-    print(DBSTRING)
     # get_rounding_setting('doge')
     x = rounding_price('btc')
     y = rounding_unit('btc')
