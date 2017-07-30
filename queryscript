@@ -11,17 +11,3 @@
  select trans_id, coin, buy_date, buy_status, buy_price, buy_amount, sell_status, sell_price, sell_units from t_coin_trans;
 # 查看交易中订单和完成的订单数量
  select * from v_trans_summary;
-
-create view v_profit_summary as
-select date_format(str_to_date(sell_date,'%Y-%m-%d %H:%i:%s'),'%Y-%m-%d') sellDate,sum(sell_amount-buy_amount) total_profit_amount, count(*) total_trans_count from t_coin_trans_log where sell_status='closed' group by date_format(str_to_date(sell_date,'%Y-%m-%d %H:%i:%s'),'%Y-%m-%d');
-
-
-create view v_trans_summary as
-select '交易中' trans_status, count(*) from t_coin_trans
-union
-select '交易完成' trans_status, count(*) from t_coin_trans_log where sell_status='closed'
-union
-select '买入取消' trans_status, count(*) from t_coin_trans_log where buy_status='cancelled'
-union
-select '卖出取消' trans_status, count(*) from t_coin_trans_log where sell_status='cancelled'
-;
