@@ -1,5 +1,10 @@
 # patch sell order due to rounding issues
 
+#select coin,count(*) from t_coin_trans where coin in ('eth', 'tmc', 'etc', 'xlm', 'ardr', 'mgc', 'xzc', 'wdc', 'qrk', 'blk', 'ncs') group by coin;
+select coin,count(*) from t_coin_trans where coin in ('wdc') group by coin;
+select coin, trans_id, buy_price, convert(json_extract(priceitem,'$.buy_price'),decimal(10,5)) updated_price, sell_price,convert(json_extract(priceitem,'$.buy_price'),decimal(10,5))*1.012 updated_sellprice from t_coin_trans where buy_price <> convert(json_extract(priceitem,'$.buy_price'),decimal(10,5)) order by coin;
+
 create table t_coin_trans_bk_0730 as select * from t_coin_trans;
-select coin from t_coin_trans where coin in ('eth', 'tmc', 'etc', 'xlm', 'ardr', 'mgc', 'xzc', 'wdc', 'qrk', 'blk', 'ncs');
-update t_coin_trans set sell_status=null where coin in ('eth', 'tmc', 'etc', 'xlm', 'ardr', 'mgc', 'xzc', 'wdc', 'qrk', 'blk', 'ncs') and sell_status='open';
+update t_coin_trans set buy_price = convert(json_extract(priceitem,'$.buy_price'),decimal(10,5))
+   where buy_price <> convert(json_extract(priceitem,'$.buy_price'),decimal(10,5)) and coin in ('wdc');
+update t_coin_trans set sell_status=null, sell_order_id=null where coin in ('wdc') and sell_status='open';
