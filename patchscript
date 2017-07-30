@@ -1,0 +1,5 @@
+# patch sell order due to rounding issues
+
+create table t_coin_trans_bk_0730 as select * from t_coin_trans;
+select coin from t_coin_trans where coin in ('eth', 'tmc', 'etc', 'xlm', 'ardr', 'mgc', 'xzc', 'wdc', 'qrk', 'blk', 'ncs');
+update t_coin_trans set sell_status=null where coin in ('eth', 'tmc', 'etc', 'xlm', 'ardr', 'mgc', 'xzc', 'wdc', 'qrk', 'blk', 'ncs') and sell_status='open';

@@ -4,7 +4,7 @@
 __author__ = 'Owen_Study/owen_study@126.com'
 # Create date: 17-7-19 下午9:08
 
-import urlaccess, json,common
+import urlaccess, json,common, heapq
 
 '''系统运行时需要用到的一些参数'''
 
@@ -96,6 +96,15 @@ CLOSED_TRANS_FILE = 'closed_trans_file'
 
 
 # Get rounding setting data
+def get_rounding_len(floatnum):
+    # get the numbers after dot. for price
+    if str(floatnum).split('.')[0] == str(floatnum):
+        rounding_num = 0
+    else:
+        rounding_num = len('{0}'.format(floatnum).split('.')[1])
+    return rounding_num
+
+
 # 从网站获取所有的COIN价格信息，从价格信息中取得价格和交易单元的小数位
 def get_rounding_setting(market):
     pricedata = urlaccess.get_content('http://api.btc38.com/v1/ticker.php?c=all&mk_type=cny')
@@ -113,22 +122,22 @@ def get_rounding_setting(market):
                 if price is None or len(price) == 0:
                     continue
                 else:
-                    price = tickers.get('ticker').get('low')
+                    pricelow = get_rounding_len(tickers.get('ticker').get('low'))
+                    pricehigh = get_rounding_len(tickers.get('ticker').get('high'))
+                    pricelast = get_rounding_len(tickers.get('ticker').get('last'))
+                    pricesell = get_rounding_len(tickers.get('ticker').get('sell'))
+                    pricebuy = get_rounding_len(tickers.get('ticker').get('buy'))
+
+                    pricelist = [pricelow, pricehigh, pricelast, pricesell, pricebuy]
+                    # get the numbers after dot. for price
+                    rounding_price_num = heapq.nlargest(1, pricelist)[0]
                     volume = tickers.get('ticker').get('vol')
-                # get the numbers after dot. for price
-                if str(price).split('.')[0] == str(price):
-                    rounding_num = 0
-                else:
-                    rounding_num = len('{0}'.format(price).split('.')[1])
-                # for unit rounding
-                if str(volume).split('.')[0] == str(volume):
-                    unit_num = 0
-                else:
-                    unit_num = len('{0}'.format(volume).split('.')[1])
+                    unit_num = get_rounding_len(volume)
+
 
                 coin_rounding_price = {}
 
-                coin_rounding_price["price"] = rounding_num
+                coin_rounding_price["price"] = rounding_price_num
                 coin_rounding_price["unit"] = unit_num
                 coin_rounding[coin]=coin_rounding_price
                 # print(coin_rounding)
@@ -141,7 +150,19 @@ def get_rounding_setting(market):
 
 # rounding_price = get_rounding_setting('btc38')
 
-rounding_price_setting={'vash': {'unit': 6, 'price': 3}, 'doge': {'unit': 5, 'price': 5}, 'dash': {'unit': 6, 'price': 1}, 'ics': {'unit': 6, 'price': 2}, 'ardr': {'unit': 6, 'price': 3}, 'sys': {'unit': 6, 'price': 4}, 'ncs': {'unit': 6, 'price': 2}, 'etc': {'unit': 5, 'price': 1}, 'nxt': {'unit': 6, 'price': 3}, 'xrp': {'unit': 6, 'price': 4}, 'bts': {'unit': 6, 'price': 4}, 'ltc': {'unit': 6, 'price': 2}, 'qrk': {'unit': 6, 'price': 3}, 'blk': {'unit': 6, 'price': 1}, 'ppc': {'unit': 6, 'price': 2}, 'tmc': {'unit': 6, 'price': 2}, 'zcc': {'unit': 6, 'price': 3}, 'btc': {'unit': 6, 'price': 1}, 'xcn': {'unit': 5, 'price': 4}, 'hlb': {'unit': 6, 'price': 4}, 'xzc': {'unit': 6, 'price': 1}, 'xem': {'unit': 6, 'price': 4}, 'mec': {'unit': 6, 'price': 3}, 'ybc': {'unit': 6, 'price': 1}, 'ric': {'unit': 6, 'price': 3}, 'eac': {'unit': 5, 'price': 5}, 'eth': {'unit': 6, 'price': 0}, 'wdc': {'unit': 6, 'price': 1}, 'xpm': {'unit': 6, 'price': 2}, 'emc': {'unit': 6, 'price': 2}, 'mgc': {'unit': 6, 'price': 2}, 'tag': {'unit': 5, 'price': 2}, 'xlm': {'unit': 6, 'price': 3}}
+rounding_price_setting = {'vash': {'price': 3, 'unit': 6}, 'xlm': {'price': 4, 'unit': 6}, 'xrp': {'price': 4, 'unit': 6},
+            'emc': {'price': 2, 'unit': 6}, 'ybc': {'price': 1, 'unit': 6}, 'bts': {'price': 4, 'unit': 4},
+            'wdc': {'price': 4, 'unit': 6}, 'tmc': {'price': 3, 'unit': 6}, 'xem': {'price': 4, 'unit': 6},
+            'mec': {'price': 3, 'unit': 6}, 'etc': {'price': 2, 'unit': 6}, 'nxt': {'price': 3, 'unit': 6},
+            'mgc': {'price': 3, 'unit': 6}, 'ncs': {'price': 4, 'unit': 6}, 'doge': {'price': 5, 'unit': 5},
+            'ics': {'price': 2, 'unit': 5}, 'ltc': {'price': 2, 'unit': 6}, 'zcc': {'price': 3, 'unit': 6},
+            'ardr': {'price': 4, 'unit': 6}, 'xpm': {'price': 2, 'unit': 6}, 'btc': {'price': 1, 'unit': 6},
+            'eac': {'price': 5, 'unit': 4}, 'dash': {'price': 1, 'unit': 6}, 'ric': {'price': 3, 'unit': 6},
+            'ppc': {'price': 2, 'unit': 6}, 'xcn': {'price': 4, 'unit': 6}, 'xzc': {'price': 2, 'unit': 6},
+            'hlb': {'price': 4, 'unit': 6}, 'eth': {'price': 1, 'unit': 6}, 'blk': {'price': 3, 'unit': 6},
+            'sys': {'price': 4, 'unit': 6}, 'tag': {'price': 2, 'unit': 6}, 'qrk': {'price': 4, 'unit': 6}}
+
+
 # 价格rounding规则
 def rounding_price(coin):
     rounding_data = rounding_price_setting.get(coin)
@@ -158,9 +179,9 @@ def rounding_unit(coin):
         return rounding_data.get('unit', 2)
 
 if __name__ == '__main__':
-    get_db_string()
-    # get_rounding_setting('doge')
-    x = rounding_price('btc')
-    y = rounding_unit('btc')
+    # get_db_string()
+    get_rounding_setting('btc38')
+    x = rounding_price('wdc')
+    y = rounding_unit('ltc')
     print('{0}:{1}'.format(x,y))
     pass
