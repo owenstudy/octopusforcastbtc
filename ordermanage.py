@@ -17,7 +17,7 @@ class OrderManage:
     #提交定单，只需要传入参数就直接执行
     #('doge_cny','sell',0.03,1000)
     def submitOrder(self,pair, trade_type, rate, amount, connection=None, update_delay=None, error_handler=None):
-        return self.clientapi.submitOrder(pair,trade_type,rate,round(amount,2))
+        return self.clientapi.submitOrder(pair,trade_type,rate,amount)
     #得到某个COIN或者全部的余额信息
     #pair e.g. doge_cny
     def getMyBalance(self,coin=None):
