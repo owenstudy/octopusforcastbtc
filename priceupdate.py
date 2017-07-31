@@ -160,17 +160,17 @@ class PriceBuffer(object):
     def __verify_std_rate(self):
         total_open_count = ormmysql.openordercount()
         open_rate = total_open_count / publicparameters.MAX_OPEN_ORDER_POOL
-
+        base_rate =0.25
         if open_rate < 0.3:
-            verify_rate = 0.35
+            verify_rate = base_rate
         elif open_rate < 0.5:
-            verify_rate = 0.45
+            verify_rate = base_rate + 0.1
         elif open_rate < 0.6:
-            verify_rate = 0.65
+            verify_rate = base_rate + 0.2
         elif open_rate < 0.8:
-            verify_rate = 0.75
+            verify_rate = base_rate + 0.3
         else:
-            verify_rate = 0.85
+            verify_rate = base_rate +0.45
         return verify_rate
 
     '''买入检查'''
@@ -401,7 +401,7 @@ class PriceBuffer(object):
                     continue
                 actual_profit_rate=(newpriceitem.buy_price-priceitem.buy_price)/priceitem.buy_price
                 # 达到卖出条件则认为预测成功,预测价格变化是实际的一定比例，如0.8
-                if actual_profit_rate>publicparameters.SELL_PROFIT_RATE*1.2:
+                if actual_profit_rate>publicparameters.SELL_PROFIT_RATE*0.9:
                     priceitem.price_buy_forecast_verify=True
                     priceitem.price_buy_forecast_verify_date=common.get_curr_time_str()
                     print('Verified result is correct: @%f'% newpriceitem.buy_price)
@@ -418,22 +418,6 @@ class PriceBuffer(object):
 
         
         pass
-
-    # 实际是否买入更新，根据新的实际价格得到是不是要买入，更新实际的情况，作为对预判的检查
-    def buyforecast_verifyX(self,newpriceitem):
-
-        if len(self.price_buffer)==0:
-            newpriceitem.price_buy_forecast_verify = False
-            return
-
-        last_price_item = self.price_buffer[len(self.price_buffer) - 1]
-        # 只有预估的价格是买入时，如果新的价格是上升的，说明当时预估的结果是正确的，其它的则说明不正确
-        if last_price_item.price_buy_forecast is True and newpriceitem.buy_price > last_price_item.buy_price:
-            last_price_item.price_buy_forecast_verify = True
-        elif last_price_item.price_buy_forecast is False and newpriceitem.buy_price < last_price_item.buy_price:
-            last_price_item.price_buy_forecast_verify = True
-        else:
-            last_price_item.price_buy_forecast_verify = False
 
     '''从市场取得价格，返回一个价格明细'''
     def getpriceitem(self,market,coin_pair):
