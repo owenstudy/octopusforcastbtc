@@ -404,14 +404,16 @@ class PriceBuffer(object):
                 if actual_profit_rate>publicparameters.SELL_PROFIT_RATE*0.9:
                     priceitem.price_buy_forecast_verify=True
                     priceitem.price_buy_forecast_verify_date=common.get_curr_time_str()
-                    print('Verified result is correct: @%f'% newpriceitem.buy_price)
+                    # print('Verified passed:{0}:coin:{1},buy_price:{2},sell_price:{3}'.format(\
+                    #     common.get_curr_time_str(),priceitem.coin,priceitem.buy_price,newpriceitem.buy_price))
+                    # print('Verified result is correct: @%f'% newpriceitem.buy_price)
                     priceinfo = self.__save_price(priceitem)
                     # 执行实际的卖出操作
                     # sell to process in sell_check for all transaction
                     # trans_status = self.cointrans_handler.coin_trans(self.market, 'sell', newpriceitem.buy_price, priceitem)
                     trans_comments = "{0} -->Done: Verified Date: {1}"
                     # 打印出交易信息
-                    print(trans_comments.format(priceinfo, common.get_curr_time_str()))
+                    # print(trans_comments.format(priceinfo, common.get_curr_time_str()))
                     # print(priceinfo+'-->Done: trans status: @%s'%common.CommonFunction.get_curr_time())
                 else:
                     priceitem.price_buy_forecast_verify=False
