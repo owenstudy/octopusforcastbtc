@@ -507,10 +507,10 @@ class MonitorPrice(object):
                             if forecast_item.price_buy_forecast_verify is True:
                                 verified_count = verified_count + 1
                         # 输出每个COIN中预测的情况，多少达到了预期盈利
-                        if len(forecast_list) > 0:
-                            print('%s: verified:%d, total:%d for coin:%s'\
-                                  %(common.CommonFunction.get_curr_time(), verified_count, len(forecast_list), coin_pair))
-                    if runtime % 1000 == 0:
+                        # if len(forecast_list) > 0:
+                        #     print('%s: verified:%d, total:%d for coin:%s'\
+                        #           %(common.CommonFunction.get_curr_time(), verified_count, len(forecast_list), coin_pair))
+                    if runtime % 200 == 0:
                         # 把预测中的列表输出出来
                         sorted_forecast_list = self.output_forecast_list(market, coin_list)
                 except Exception as e:
@@ -528,7 +528,7 @@ class MonitorPrice(object):
             for forecast_item in forecast_list:
                 if forecast_item.price_buy_forecast_verify is True:
                     verified_count = verified_count + 1
-            unsorted_forecast_list.append({'coin':coin_pair, 'total':len(forecast_list), 'verified':verified_count, \
+            unsorted_forecast_list.append({'coin':coin_pair, 'Forecast-total':len(forecast_list), 'verified':verified_count, \
                                          'rate': round(verified_count/len(forecast_list),2)})
         # 对验证的结果进行排序，按验证率进行倒序
         sorted_forecast_list= sorted(unsorted_forecast_list, key=operator.itemgetter('rate'), reverse=True)
@@ -536,9 +536,17 @@ class MonitorPrice(object):
         print('---------------------final resut:--------------------')
         for forecast_item in sorted_forecast_list:
             if forecast_item.get('rate') > 0:
-                print('%s: coin:%s, verified:%d, total:%d, rate:%f' \
-                      % (common.CommonFunction.get_curr_time(), forecast_item.get('coin'), \
-                         forecast_item.get('verified'), forecast_item.get('total'), forecast_item.get('rate') ))
+                # Save to file to do analyze
+                forecasedata = open('ForecaseData.txt','a')
+
+                data = '{0}: coin:{1}, verified:{2}, total:{3}, rate:{4}\n'.format(\
+                      common.get_curr_time_str(), forecast_item.get('coin'), \
+                         forecast_item.get('verified'), forecast_item.get('total'), forecast_item.get('rate') )
+                print(data)
+                # save to file
+                forecasedata.write(data)
+                forecasedata.close()
+
             pass
         return sorted_forecast_list
     '''测试一段时间内的最优的可用币种列表'''

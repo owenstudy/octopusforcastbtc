@@ -1,8 +1,8 @@
 # query the closed transaction data
- select trans_id,coin,sell_amount-buy_amount as profit_amount, buy_status,buy_price,buy_units,buy_amount,sell_status,sell_price,sell_amount
+ select trans_id,coin,round((sell_amount-buy_amount)*2/3,2) as profit_amount, buy_status,buy_price,buy_units,buy_amount,sell_status,sell_price,sell_amount
   from t_coin_trans_log where sell_status='closed' order by trans_id ;
 # get the total profit buy_amount
- select sum(sell_amount-buy_amount) total_profit_amount, count(*) from t_coin_trans_log;
+ select round(sum(sell_amount-buy_amount)*2/3,2) total_profit_amount, count(*) from t_coin_trans_log;
 # get the profit summary base on buy_date
  select * from v_profit_summary;
 # query the outstanding transactiond data
@@ -11,3 +11,5 @@
  select trans_id, coin, buy_date, buy_status, buy_price, buy_amount, sell_status, sell_price, sell_units from t_coin_trans;
 # 查看交易中订单和完成的订单数量
  select * from v_trans_summary;
+# CHECK the profit amount each day
+ select selldate,sum(total_profit_amount) from v_profit_all group by selldate;

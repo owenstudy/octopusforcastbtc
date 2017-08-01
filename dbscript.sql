@@ -34,8 +34,9 @@ PRIMARY KEY (trans_id)
 create table t_coin_trans_log as select * from t_coin_trans where 1=0;
 
 
+drop view v_profit_summary;
 create view v_profit_summary as
-select date_format(str_to_date(sell_date,'%Y-%m-%d %H:%i:%s'),'%Y-%m-%d') sellDate,sum(sell_amount-buy_amount) total_profit_amount, count(*) total_trans_count from t_coin_trans_log where sell_status='closed' group by date_format(str_to_date(sell_date,'%Y-%m-%d %H:%i:%s'),'%Y-%m-%d');
+select date_format(str_to_date(sell_date,'%Y-%m-%d %H:%i:%s'),'%Y-%m-%d') sellDate,sum(round((sell_amount-buy_amount)*2/3,2)) total_profit_amount, count(*) total_trans_count from t_coin_trans_log where sell_status='closed' group by date_format(str_to_date(sell_date,'%Y-%m-%d %H:%i:%s'),'%Y-%m-%d');
 
 drop view v_profit_all;
 create view v_profit_all as
@@ -72,4 +73,12 @@ select 'coins1', a.* from coins1.t_coin_trans a union
 select 'coins2', a.* from coins2.t_coin_trans a union
 select 'coins3', a.* from coins3.t_coin_trans a
 
+;
+
+drop view v_coin_trans_log_all;
+create view v_coin_trans_log_all as
+select 'coins', a.* from coins.t_coin_trans_log a union
+select 'coins1', a.* from coins1.t_coin_trans_log a union
+select 'coins2', a.* from coins2.t_coin_trans_log a union
+select 'coins3', a.* from coins3.t_coin_trans_log a
 ;
