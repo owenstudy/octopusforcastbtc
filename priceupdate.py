@@ -530,7 +530,7 @@ class MonitorPrice(object):
             for forecast_item in forecast_list:
                 if forecast_item.price_buy_forecast_verify is True:
                     verified_count = verified_count + 1
-            unsorted_forecast_list.append({'coin':coin_pair, 'Forecast-total':len(forecast_list), 'verified':verified_count, \
+            unsorted_forecast_list.append({'coin':coin_pair, 'total':len(forecast_list), 'verified':verified_count, \
                                          'rate': round(verified_count/len(forecast_list),2)})
         # 对验证的结果进行排序，按验证率进行倒序
         sorted_forecast_list= sorted(unsorted_forecast_list, key=operator.itemgetter('rate'), reverse=True)
@@ -541,7 +541,7 @@ class MonitorPrice(object):
                 # Save to file to do analyze
                 forecasedata = open('ForecaseData.txt','a')
 
-                data = '{0}: coin:{1}, verified:{2}, total:{3}, rate:{4}\n'.format(\
+                data = '{0}: coin:{1}, verified:{2}, forecase-total:{3}, rate:{4}\n'.format(\
                       common.get_curr_time_str(), forecast_item.get('coin'), \
                          forecast_item.get('verified'), forecast_item.get('total'), forecast_item.get('rate') )
                 print(data)
