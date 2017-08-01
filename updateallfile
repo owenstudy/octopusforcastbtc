@@ -1,0 +1,14 @@
+# update program
+cd g:
+cd git
+cd octopusforcastbtc
+git pull
+cd ..
+cd 1octopusforcastbtc
+git pull
+cd ..
+cd 2octopusforcastbtc
+git pull
+cd ..
+cd 3octopusforcastbtc
+git pull
