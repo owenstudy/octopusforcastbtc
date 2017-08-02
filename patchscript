@@ -8,3 +8,43 @@ create table t_coin_trans_bk_0730 as select * from t_coin_trans;
 update t_coin_trans set buy_price = convert(json_extract(priceitem,'$.buy_price'),decimal(10,5))
    where buy_price <> convert(json_extract(priceitem,'$.buy_price'),decimal(10,5)) and coin in ('wdc');
 update t_coin_trans set sell_status=null, sell_order_id=null where coin in ('wdc') and sell_status='open';
+
+#20170802
+insert into coins.t_coin_trans
+(
+ market,
+ buy_order_id,
+ buy_date,
+ coin,
+ buy_price,
+ buy_units,
+ buy_amount,
+ buy_status,
+ sell_order_id,
+ sell_date,
+ sell_price,
+ sell_units,
+ sell_amount,
+ sell_status,
+ priceitem
+)
+select
+ market,
+ buy_order_id,
+ buy_date,
+ coin,
+ buy_price,
+ buy_units,
+ buy_amount,
+ buy_status,
+ sell_order_id,
+ sell_date,
+ sell_price,
+ sell_units,
+ sell_amount,
+ sell_status,
+ priceitem
+ from coins2.t_coin_trans;
+
+ create table t_coin_trans_bk_0802 as select * from coins2.t_coin_Trans;
+ delete from coins2.t_coin_trans;

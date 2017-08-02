@@ -13,3 +13,5 @@
  select * from v_trans_summary;
 # CHECK the profit amount each day
  select selldate,sum(total_profit_amount) from v_profit_all group by selldate;
+# outstanding capital using now
+ select coins,count(*),sum(buy_amount) from v_coin_trans_all group by coins;

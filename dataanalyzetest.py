@@ -39,11 +39,22 @@ for line in open('ForecaseData.txt','r').readlines():
         forecast_rate_list.get(coin).append(rate)
 doge = forecast_rate_list.get('ardr_cny')
 print(doge)
-ts = pd.Series(doge, index=pd.date_range('1/1/2000', periods=len(doge)))
-ts = ts.std()
+ts = pd.Series(doge, index=pd.date_range('1/8/2017', periods=len(doge)))
+# ts = ts.std()
 print(ts)
-ts = pd.Series(doge, index=pd.date_range('1/1/2000', periods=len(doge)))
+ts = pd.Series(doge, index=pd.date_range('8/1/2017', periods=len(doge),freq='0.5H' ))
 
-ts=ts.diff()
+ts=ts.describe()
 ts.plot()
+plt.show()
+
+
+# 正态分布
+mu = 0
+sigma = 1 # standard deviation
+x = np.arange(-5,5,0.1)
+
+y = stats.norm.pdf(x, 0, 1)
+
+plt.plot(x, y )
 plt.show()
