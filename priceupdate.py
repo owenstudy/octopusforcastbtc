@@ -7,6 +7,7 @@ import logging;logging.basicConfig(level=logging.INFO,filename='pricehistory.log
 import datetime,time, operator
 import const,common
 import ordermanage,cointrans, publicparameters, ormmysql
+from dailysummary import DailySummary
 
 '''单个价格的类信息'''
 class PriceItem(object):
@@ -515,6 +516,12 @@ class MonitorPrice(object):
                     if runtime % 200 == 0:
                         # 把预测中的列表输出出来
                         sorted_forecast_list = self.output_forecast_list(market, coin_list)
+                    # 增加定时输出报表的功能
+                    if runtime % 1000 ==0:
+                        daily_summary = DailySummary([market])
+                        # 获取当前时间的余额信息
+                        daily_summary.get_balance()
+
                 except Exception as e:
                     print('处理{0}时出现错误:{1}'.format(coin_pair, str(e)))
         # return sorted_forecast_list
