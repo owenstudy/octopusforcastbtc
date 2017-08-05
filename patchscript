@@ -48,3 +48,11 @@ select
 
  create table t_coin_trans_bk_0802 as select * from coins2.t_coin_Trans;
  delete from coins2.t_coin_trans;
+
+ insert into coins.t_coin_trans select * from coins.t_coin_trans_log where sell_order_id=368438717;
+ delete from coins.t_coin_trans_log where sell_order_id=368438717;
+ update coins.t_coin_trans set sell_status='open' where sell_order_id=368438717;
+
+  insert into coins2.t_coin_trans select * from coins2.t_coin_trans_log where sell_order_id=368438930;
+ delete from coins2.t_coin_trans_log where sell_order_id=368438930;
+ update coins2.t_coin_trans set sell_status='open' where sell_order_id=368438930;

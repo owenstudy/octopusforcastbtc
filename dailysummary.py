@@ -96,7 +96,7 @@ class DailySummary(object):
         # 所有COIN的结果
         total_bal = {'date': currdate, 'total_est_cny': total_est_cny, 'total_est_cny_ori': total_est_cny_ori,
                      'total_cny_bal': total_cny_bal,'total_open_buy_amt': total_open_buy_amt,
-                     'total_cny_with_open': total_cny_bal + total_open_buy_amt,
+                     'total_cny_with_open': round(total_cny_bal + total_open_buy_amt,4),
                      'total_open_est_cny': total_open_est_cny}
         total_bal_str = json.dumps(total_bal, sort_keys=True)
         # 保存数据到文件
@@ -184,6 +184,7 @@ class DailySummary(object):
 if __name__ == '__main__':
     market_list=['btc38']
     daily_summary=DailySummary(market_list)
+    # daily_summary.get_open_bal('ppc')
     daily_summary.get_balance()
-    bal=daily_summary.output_summary('daily_summary.log',)
+    # bal=daily_summary.output_summary('daily_summary.log',)
     pass

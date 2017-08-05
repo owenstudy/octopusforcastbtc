@@ -377,6 +377,7 @@ if __name__ == '__main__':
     #
     #
     trans = CoinTrans('btc38')
+    trans.update_order_status()
     # trans.test_coin_trans()
     #
     #
