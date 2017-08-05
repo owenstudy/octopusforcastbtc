@@ -643,7 +643,10 @@ class BigFish( object ):
             data = coin_forecast[coinpair]
             succcnt = data.get('succcnt')
             totalcnt = data.get('totalcnt')
-            succrate = round (succcnt/totalcnt, 2)
+            if totalcnt == 0:
+                succrate = 0
+            else:
+                succrate = round (succcnt/totalcnt, 2)
             forecast_item = {'coin':coinpair, 'succcnt': succcnt, \
                              'totalcnt': totalcnt, 'succrate': succrate}
             forecast_list.append(forecast_item)
