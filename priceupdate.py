@@ -564,20 +564,20 @@ class MonitorPrice(object):
         # 针对btc38市场进行全部COIN进行查找， TODO 需要进行一个更进一步的排序，同等比例的情况下数量优先
         # sorted_forecast_list = self.monitor_coin_list('btc38', ['doge_cny','xrp_cny','etc_cny','xpm_cny'])
 
-        sorted_forecast_list = self.monitor_coin_list('btc38', ['doge_cny', 'btc_cny', 'ltc_cny', 'xrp_cny', 'eth_cny', 'etc_cny', \
+        self.monitor_coin_list('btc38', ['doge_cny', 'btc_cny', 'ltc_cny', 'xrp_cny', 'eth_cny', 'etc_cny', \
                                     'bts_cny', 'xlm_cny', 'nxt_cny', 'ardr_cny', 'blk_cny', 'xem_cny', \
                                     'emc_cny', 'dash_cny', 'xzc_cny', 'sys_cny', 'vash_cny', 'ics_cny', \
                                     'eac_cny', 'xcn_cny', 'ppc_cny', 'mgc_cny', 'hlb_cny', 'zcc_cny', \
                                     'xpm_cny', 'ncs_cny', 'ybc_cny', 'anc_cny', 'bost_cny', 'mec_cny', \
                                     'wdc_cny', 'qrk_cny', 'dgc_cny', 'bec_cny', 'ric_cny', 'src_cny', \
                                     'tag_cny', 'med_cny', 'tmc_cny','inf_cny','bcc_cny'])
-        return sorted_forecast_list
+        # return sorted_forecast_list
 
 if __name__ == '__main__':
 
     # test monitor coin
     monitor_coin=MonitorPrice()
-    x=monitor_coin.check_best_coin()
+    monitor_coin.check_best_coin()
 
     # monitor_coin.monitor_coin_list('btc38',['doge_cny','btc_cny','ltc_cny', 'xrp_cny', 'eth_cny', 'etc_cny', \
     #                                         'bts_cny', 'xlm_cny', 'nxt_cny', 'ardr_cny', 'blk_cny', 'xem_cny', \
