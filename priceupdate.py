@@ -570,7 +570,7 @@ class MonitorPrice(object):
                                     'eac_cny', 'xcn_cny', 'ppc_cny', 'mgc_cny', 'hlb_cny', 'zcc_cny', \
                                     'xpm_cny', 'ncs_cny', 'ybc_cny', 'anc_cny', 'bost_cny', 'mec_cny', \
                                     'wdc_cny', 'qrk_cny', 'dgc_cny', 'bec_cny', 'ric_cny', 'src_cny', \
-                                    'tag_cny', 'med_cny', 'tmc_cny','inf_cny'])
+                                    'tag_cny', 'med_cny', 'tmc_cny','inf_cny','bcc_cny'])
         return sorted_forecast_list
 
 if __name__ == '__main__':
