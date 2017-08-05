@@ -68,10 +68,10 @@ select 'coins3', a.* from coins3.v_trans_summary a
 
 drop view v_coin_trans_all;
 create view v_coin_trans_all as
-select 'coins', trans_id, buy_date,buy_price,buy_amount, sell_status from coins.t_coin_trans a union
-select 'coins1', trans_id, buy_date,buy_price,buy_amount, sell_status from coins1.t_coin_trans a union
-select 'coins2', trans_id, buy_date,buy_price,buy_amount, sell_status from coins2.t_coin_trans a union
-select 'coins3', trans_id, buy_date,buy_price,buy_amount, sell_status from coins3.t_coin_trans a
+select 'coins', a.* from coins.t_coin_trans a union
+select 'coins1', a.* from coins1.t_coin_trans a union
+select 'coins2', a.* from coins2.t_coin_trans a union
+select 'coins3', a.* from coins3.t_coin_trans a
 ;
 
 drop view v_coin_trans_log_all;

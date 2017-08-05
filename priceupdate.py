@@ -444,7 +444,7 @@ class PriceBuffer(object):
             # 把价格日期保存成字符串
             priceitem=PriceItem(common.get_curr_time_str(),coin,buy_price,buy_depth,sell_price,sell_depth)
         except Exception as e:
-            print('取得价格列表时错误：{0}'.format(str(e)))
+            print('取得[{1}]价格列表时错误：{0}'.format(str(e), coin_pair))
         return priceitem
 
 '''监控价格的运行'''
@@ -578,7 +578,7 @@ if __name__ == '__main__':
     #                                         'eac_cny', 'xcn_cny', 'ppc_cny', 'mgc_cny', 'hlb_cny', 'zcc_cny', \
     #                                         'xpm_cny', 'ncs_cny', 'ybc_cny', 'anc_cny', 'bost_cny', 'mec_cny', \
     #                                         'wdc_cny', 'qrk_cny', 'dgc_cny', 'bec_cny', 'ric_cny', 'src_cny', \
-    #                                         'tag_cny', 'med_cny', 'tmc_cny'])
+    #                                         'tag_cny', 'med_cny', 'tmc_cny','inf_cny'])
 
     # now1=datetime.datetime.now()
     # time.sleep(2)

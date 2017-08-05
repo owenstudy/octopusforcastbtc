@@ -66,6 +66,27 @@ OrderItemTableLog = Table(
     Column('priceitem', VARCHAR(1000))
 )
 
+# 视图,所有DB的open order
+OpenOrderView = Table(
+    "v_coin_trans_all", metadata,
+    Column('trans_id', INTEGER, primary_key=True),
+    Column('market', VARCHAR(100)),
+    Column('coin', VARCHAR(100)),
+    Column('buy_order_id', INTEGER),
+    Column('buy_status', VARCHAR(100)),
+    Column('buy_date', VARCHAR(100)),
+    Column('buy_price', FLOAT),
+    Column('buy_units', FLOAT),
+    Column('buy_amount', FLOAT),
+    Column('sell_order_id', INTEGER),
+    Column('sell_status', VARCHAR(100)),
+    Column('sell_date', VARCHAR(100)),
+    Column('sell_price', FLOAT),
+    Column('sell_units', FLOAT),
+    Column('sell_amount', FLOAT),
+    Column('priceitem', VARCHAR(1000))
+)
+
 # 创建数据库连接,MySQLdb连接方式
 # My laptop PC DB
 # mysql_db = create_engine('mysql+pymysql://coin:Windows2000@127.0.0.1:3306/coins', echo = False)
@@ -83,11 +104,17 @@ class MapperOrder(object):
 # 创建一个映射类,one table one class
 class MapperOrderLog(object):
     pass
+# 所有DB中的open order列表
+class MapperAllOpenView(object):
+    pass
+
 
 # 把表映射到类
 mapper(MapperOrder, OrderItemTable)
 # 映射到LOG表
 mapper(MapperOrderLog, OrderItemTableLog)
+# 所有DB中的open order列表
+mapper(MapperAllOpenView, OpenOrderView)
 
 
 # 创建了一个自定义了的 Session类
@@ -243,6 +270,7 @@ def openordercount():
     # print(opencount)
     return opencount
     pass
+
 # 获取open order list，把记录转换成列表以便在程序中进行处理
 def openorderlist():
     # Find the record in DB
@@ -251,6 +279,18 @@ def openorderlist():
 
     # coin and buy_date is unique
     for orderrecord in query.filter(or_(MapperOrder.sell_status=='open', MapperOrder.sell_status == None)):
+        orderitem = cointrans.OrderItem('x', 'y')
+        recordtoorder(orderrecord, orderitem)
+        orderlist.append(orderitem)
+    return orderlist
+# 从视图中获取所有DB的OPEN ORDER列表
+def allopenorderlist():
+    # Find the record in DB
+    query = session.query(MapperAllOpenView)
+    orderlist = []
+
+    # coin and buy_date is unique
+    for orderrecord in query.filter(or_(MapperAllOpenView.sell_status=='open', MapperAllOpenView.sell_status == None)):
         orderitem = cointrans.OrderItem('x', 'y')
         recordtoorder(orderrecord, orderitem)
         orderlist.append(orderitem)
