@@ -116,7 +116,7 @@ class PriceBuffer(object):
         self.__PRICE_TREND_WEAK_PERCENTAGE = price_trend_weak_rate
         self.__PRICE_TREND_RANGE = price_trend_range
         self.__BUY_INDEX_STANDARD=buy_index_standard
-
+    '''得到 TODO'''
     '''得到预测列表中的校验正确的比例,买入时参考这一比例'''
     def get_forecast_rate(self):
         # 判断当前预测的列表中哪些达到了预期的盈利目标
@@ -516,11 +516,18 @@ class MonitorPrice(object):
                         # if len(forecast_list) > 0:
                         #     print('%s: verified:%d, total:%d for coin:%s'\
                         #           %(common.CommonFunction.get_curr_time(), verified_count, len(forecast_list), coin_pair))
-                    if runtime % 200 == 0:
+                    if runtime % 100 == 0:
                         # 把预测中的列表输出出来
                         sorted_forecast_list = self.output_forecast_list(market, coin_list)
+                        # 大鱼检查
+                        bigfish = BigFish('ForecaseData.txt')
+                        bigfishlist = bigfish.get_big_fish_list()
+                        if len(bigfishlist) != 0:
+                            bigfishfile = open('bigfish.txt','a')
+                            bigfishfile.write('{0}:{1}'.format(common.get_curr_time_str(),bigfishlist))
+                            bigfishfile.close()
                     # 增加定时输出报表的功能
-                    if runtime % 1000 ==0:
+                    if runtime % 1000 == 0:
                         daily_summary = DailySummary([market])
                         # 获取当前时间的余额信息
                         daily_summary.get_balance()
@@ -540,8 +547,12 @@ class MonitorPrice(object):
             for forecast_item in forecast_list:
                 if forecast_item.price_buy_forecast_verify is True:
                     verified_count = verified_count + 1
+            if len(forecast_list) == 0:
+                rate = 0
+            else:
+                rate = round(verified_count/len(forecast_list),2)
             unsorted_forecast_list.append({'coin':coin_pair, 'total':len(forecast_list), 'verified':verified_count, \
-                                         'rate': round(verified_count/len(forecast_list),2)})
+                                         'rate': rate })
         # 对验证的结果进行排序，按验证率进行倒序
         sorted_forecast_list= sorted(unsorted_forecast_list, key=operator.itemgetter('rate'), reverse=True)
 
@@ -575,12 +586,103 @@ class MonitorPrice(object):
                                     'wdc_cny', 'qrk_cny', 'ric_cny', \
                                     'tag_cny', 'tmc_cny','inf_cny','bcc_cny'])
         # return sorted_forecast_list
+'''捕捉大鱼，短时候内上升很快，有较大潜力强力上扬的COIN，买入一大笔霆投资'''
+class BigFish( object ):
+    def __init__(self, forecast_file):
+        self.__forecast_file = forecast_file
+        # 大鱼投资是默认投资的多少倍
+        self.BIG_FISH_TIMES = 10
+        # 大鱼投资时最低的预测成功率
+        self.MIN_FORECAST_RATE = 0.25
+        # 大鱼投资时最高的预测成功率，防止买入在顶端
+        self.MAX_FORECAST_RATE = 0.55
+        # 预测数据的时间范围，最近的多少秒,最近半小时
+        self.FORECAST_RATE_DURATION = 1800
+        # 最近的预测数据列表
+        self.forecast_list = []
 
+    '''从文件中读取最近的预测数据情况'''
+    def __get_forecast_data(self):
+        # 当前的系统时间
+        currdate = datetime.datetime.now()
+        # 预测数据的开始时间
+        forecast_start_time = currdate - datetime.timedelta(seconds=self.FORECAST_RATE_DURATION)
+        # 读取文件中的预测数据
+        for indx, line in enumerate(open('ForecaseData.txt', 'r').readlines()):
+            forecast_time = common.CommonFunction.strtotime(line.split(': ')[0])
+            forecast_items = line.split(': ')[1].split(',')
+            coin_pair = forecast_items[0].split(':')[1]
+            verify_cnt = int(forecast_items[1].split(':')[1])
+            rate = forecast_items[3].split(':')[1]
+            rate = float(rate.split('\n')[0])
+            forecast_item = {'coin_pair': coin_pair, 'date': forecast_time, 'verify_cnt': verify_cnt, 'rate': rate}
+            if forecast_time > forecast_start_time:
+                self.forecast_list.append(forecast_item)
+    '''读取预测列表中预测的成功率'''
+    def get_succ_rate(self):
+        coin_forecast = {}
+        for forecastitem in self.forecast_list:
+            coin_pair = forecastitem.get('coin_pair')
+            forecaserate = forecastitem.get('rate', 0)
+            verify_cnt = forecastitem.get('verify_cnt')
+            # 之前保存的数据
+            if coin_forecast.get(coin_pair, -1) == -1:
+                coin_forecast[coin_pair] = {'totalcnt':0, 'succcnt': 0}
+            totalcnt = coin_forecast[coin_pair].get('totalcnt',0)
+            succcnt = coin_forecast[coin_pair].get('succcnt', 0)
+            totalcnt = totalcnt + 1
+            coin_forecast[coin_pair]['totalcnt'] = totalcnt
+
+            if forecaserate > self.MIN_FORECAST_RATE and forecaserate < self.MAX_FORECAST_RATE and verify_cnt >10 :
+                succcnt = succcnt + 1
+                coin_forecast[coin_pair]['succcnt'] = succcnt
+        # print('dict:{0}'.format(coin_forecast))
+        '''字典转成列表'''
+        forecast_list = []
+        for coinpair in coin_forecast.keys():
+            data = coin_forecast[coinpair]
+            succcnt = data.get('succcnt')
+            totalcnt = data.get('totalcnt')
+            succrate = round (succcnt/totalcnt, 2)
+            forecast_item = {'coin':coinpair, 'succcnt': succcnt, \
+                             'totalcnt': totalcnt, 'succrate': succrate}
+            forecast_list.append(forecast_item)
+        # print('unsored list:{0}'.format(forecast_list))
+        '''对结果进行排序，倒序排列'''
+        sorted_forecast_list= sorted(forecast_list, key=operator.itemgetter('succrate'), reverse=True)
+
+        # print('sort:{0}'.format(sorted_forecast_list))
+        return sorted_forecast_list
+    '''得到大鱼的列表'''
+    def get_big_fish_list(self):
+        big_fish_list = []
+        sorted_forecast_list = self.get_succ_rate()
+        for forecastitem in sorted_forecast_list:
+            succrate = forecastitem.get('succrate')
+            succcnt = forecastitem.get('succcnt')
+            # 只有数量大于一定数量的预测并且预测成功率在5成以上
+            if succcnt > 10 and succrate > 0.5:
+                big_fish_list.append(forecastitem)
+        print('big fish list: {0}'.format(big_fish_list))
+        return big_fish_list
+
+
+
+    '''测试列表读取'''
+    def test(self):
+        self.__get_forecast_data()
+        print(str(self.forecast_list))
+        sorted_list = self.get_succ_rate()
+        big_fish_list = self.get_big_fish_list()
+        print('big fish list: {0}'.format(big_fish_list))
+
+    pass
 if __name__ == '__main__':
-
+    bigfish = BigFish('ForecaseData.txt')
+    bigfish.test()
     # test monitor coin
-    monitor_coin=MonitorPrice()
-    monitor_coin.check_best_coin()
+    # monitor_coin=MonitorPrice()
+    # monitor_coin.check_best_coin()
 
     # monitor_coin.monitor_coin_list('btc38',['doge_cny','btc_cny','ltc_cny', 'xrp_cny', 'eth_cny', 'etc_cny', \
     #                                         'bts_cny', 'xlm_cny', 'nxt_cny', 'ardr_cny', 'blk_cny', 'xem_cny', \

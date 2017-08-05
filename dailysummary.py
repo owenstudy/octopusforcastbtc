@@ -109,7 +109,7 @@ class DailySummary(object):
         for openitem in open_bal_list:
             fdetail.write(openitem+'\n')
         fdetail.close()
-        print(total_bal)
+        # print(total_bal)
         return total_bal
     '''得到OPEN订单的金额'''
     def get_open_bal(self, coin):
