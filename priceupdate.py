@@ -467,6 +467,9 @@ class MonitorPrice(object):
             coinpricebuffer.adjust_params(0.95,1.2,0.7,3600)
             # 获取当前的市场价格
             newpriceitem = coinpricebuffer.getpriceitem(market, coin_pair)
+            if newpriceitem is None:
+                # print('获取价格失败:{0}'.format(coin_pair))
+                return
             # 把当前的价格加入到价格列表
             coinpricebuffer.newprice(newpriceitem)
             # 最后一次的价格
