@@ -621,6 +621,7 @@ class BigFish( object ):
     '''读取预测列表中预测的成功率'''
     def get_succ_rate(self):
         coin_forecast = {}
+        self.__get_forecast_data()
         for forecastitem in self.forecast_list:
             coin_pair = forecastitem.get('coin_pair')
             forecaserate = forecastitem.get('rate', 0)
@@ -654,7 +655,7 @@ class BigFish( object ):
         '''对结果进行排序，倒序排列'''
         sorted_forecast_list= sorted(forecast_list, key=operator.itemgetter('succrate'), reverse=True)
 
-        # print('sort:{0}'.format(sorted_forecast_list))
+        print('sort:{0}'.format(sorted_forecast_list))
         return sorted_forecast_list
     '''得到大鱼的列表'''
     def get_big_fish_list(self):
@@ -673,9 +674,9 @@ class BigFish( object ):
 
     '''测试列表读取'''
     def test(self):
-        self.__get_forecast_data()
-        print(str(self.forecast_list))
-        sorted_list = self.get_succ_rate()
+        # self.__get_forecast_data()
+        # print(str(self.forecast_list))
+        # sorted_list = self.get_succ_rate()
         big_fish_list = self.get_big_fish_list()
         print('big fish list: {0}'.format(big_fish_list))
 
