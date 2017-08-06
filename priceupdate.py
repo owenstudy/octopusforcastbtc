@@ -453,6 +453,10 @@ class MonitorPrice(object):
     def __init__(self):
         # 控制的price buffer list
         self.__pricebuffer_list = {}
+        # big fish实例
+        self.bigfish = BigFish('ForecaseData.txt')
+        # big fish生成列表
+        self.big_fish_list = []
         pass
 
     '''对某一个币种进行监听测试'''
@@ -520,12 +524,16 @@ class MonitorPrice(object):
                         # 把预测中的列表输出出来
                         sorted_forecast_list = self.output_forecast_list(market, coin_list)
                         # 大鱼检查
-                        bigfish = BigFish('ForecaseData.txt')
-                        bigfishlist = bigfish.get_big_fish_list()
-                        if len(bigfishlist) != 0:
+                        each_big_fish_list = self.bigfish.get_big_fish_list()
+                        # 取每次列表的
+                        self.big_fish_list = self.big_fish_list + each_big_fish_list
+                        print('big fish list of all: {0}'.format(self.big_fish_list))
+                        # big fish 列表写入
+                        if len(each_big_fish_list) != 0:
                             bigfishfile = open('bigfish.txt','a')
-                            bigfishfile.write('{0}:{1}'.format(common.get_curr_time_str(),bigfishlist))
+                            bigfishfile.write('{0}:{1}\n'.format(common.get_curr_time_str(),each_big_fish_list))
                             bigfishfile.close()
+
                     # 增加定时输出报表的功能
                     if runtime % 1000 == 0:
                         daily_summary = DailySummary([market])
@@ -536,7 +544,20 @@ class MonitorPrice(object):
                     print('处理{0}时出现错误:{1}'.format(coin_pair, str(e)))
         # return sorted_forecast_list
         pass
+    '''检查BIG FISH并进行相应的处理'''
+    def big_fish_process(self):
+        each_big_fish_list = self.bigfish.get_big_fish_list()
+        # 取每次列表的中第一个列表
+        if len(each_big_fish_list) > 0:
+            self.big_fish_list = self.big_fish_list + each_big_fish_list[0]
+        print('big fish list of all: {0}'.format(self.big_fish_list))
+        # big fish 列表写入
+        if len(each_big_fish_list) != 0:
+            bigfishfile = open('bigfish.txt', 'a')
+            bigfishfile.write('{0}:{1}\n'.format(common.get_curr_time_str(), each_big_fish_list))
+            bigfishfile.close()
 
+        pass
     '''排序输出推荐买入列表的总体情况'''
     def output_forecast_list(self, market, coin_list):
         unsorted_forecast_list=[]
