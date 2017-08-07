@@ -456,7 +456,7 @@ class MonitorPrice(object):
         # big fish实例
         self.bigfish = BigFish('ForecaseData.txt')
         # big fish生成列表
-        self.big_fish_list = []
+        # self.big_fish_list = []
         pass
 
     '''对某一个币种进行监听测试'''
@@ -524,13 +524,14 @@ class MonitorPrice(object):
                         # 把预测中的列表输出出来
                         sorted_forecast_list = self.output_forecast_list(market, coin_list)
                         # 大鱼检查
-                        each_big_fish_list = self.bigfish.get_big_fish_list()
+                        self.bigfish.get_big_fish_list()
+                        each_big_fish_list =self.bigfish.big_fish_list
                         # 取每次列表的
-                        self.big_fish_list = self.big_fish_list + each_big_fish_list
-                        print('big fish list of all: {0}'.format(self.big_fish_list))
+                        # self.big_fish_list = self.big_fish_list + each_big_fish_list
+                        print('big fish list of all: {0}'.format(each_big_fish_list))
                         # big fish 列表写入
                         if len(each_big_fish_list) != 0:
-                            bigfishfile = open('bigfish.txt','a')
+                            bigfishfile = open('bigfish.txt','w')
                             bigfishfile.write('{0}:{1}\n'.format(common.get_curr_time_str(),each_big_fish_list))
                             bigfishfile.close()
 
@@ -621,6 +622,8 @@ class BigFish( object ):
         self.FORECAST_RATE_DURATION = 1800
         # 最近的预测数据列表
         self.forecast_list = []
+        # 大鱼列表
+        self.big_fish_list = []
 
     '''从文件中读取最近的预测数据情况'''
     def __get_forecast_data(self):
@@ -639,6 +642,19 @@ class BigFish( object ):
             forecast_item = {'coin_pair': coin_pair, 'date': forecast_time, 'verify_cnt': verify_cnt, 'rate': rate}
             if forecast_time > forecast_start_time:
                 self.forecast_list.append(forecast_item)
+    '''取得forecast列表中某个COIN的上升趋势比例'''
+    def __get_forecast_uptrend_rate(self, coin_pair):
+        coin_forecast_list = []
+        for forecastitem in self.forecast_list:
+            curr_coin_pair = forecastitem.get('coin_pair')
+            if curr_coin_pair == coin_pair:
+                coin_forecast_list.append(forecastitem)
+        # 取出列表中指定COIN的列表数据并按时间进行排序
+        sorted_coin_forecast_list = sorted(coin_forecast_list, key=operator.itemgetter('date'))
+        uptrend_rate = self.__get_uptrend_rate(sorted_coin_forecast_list, trend_key='rate')
+
+        return uptrend_rate
+        pass
     '''读取预测列表中预测的成功率'''
     def get_succ_rate(self):
         coin_forecast = {}
@@ -655,7 +671,7 @@ class BigFish( object ):
             totalcnt = totalcnt + 1
             coin_forecast[coin_pair]['totalcnt'] = totalcnt
 
-            if forecaserate > self.MIN_FORECAST_RATE and forecaserate < self.MAX_FORECAST_RATE and verify_cnt >10 :
+            if forecaserate > self.MIN_FORECAST_RATE and forecaserate < self.MAX_FORECAST_RATE and verify_cnt > 10 :
                 succcnt = succcnt + 1
                 coin_forecast[coin_pair]['succcnt'] = succcnt
         # print('dict:{0}'.format(coin_forecast))
@@ -671,6 +687,7 @@ class BigFish( object ):
                 succrate = round (succcnt/totalcnt, 2)
             forecast_item = {'coin':coinpair, 'succcnt': succcnt, \
                              'totalcnt': totalcnt, 'succrate': succrate}
+
             forecast_list.append(forecast_item)
         # print('unsored list:{0}'.format(forecast_list))
         '''对结果进行排序，倒序排列'''
@@ -680,21 +697,57 @@ class BigFish( object ):
         return sorted_forecast_list
     '''得到大鱼的列表'''
     def get_big_fish_list(self):
-        big_fish_list = []
+        # big_fish_list = []
         sorted_forecast_list = self.get_succ_rate()
         for forecastitem in sorted_forecast_list:
+            coin_pair = forecastitem.get('coin')
             succrate = forecastitem.get('succrate')
             succcnt = forecastitem.get('succcnt')
-            # 只有数量大于一定数量的预测并且预测成功率在5成以上
+
+            # 只有数量大于一定数量的预测并且预测成功率在5成以上, 预测的上升趋势大于60％
             if succcnt > 10 and succrate > 0.5:
-                big_fish_list.append(forecastitem)
-        print('big fish list: {0}'.format(big_fish_list))
-        return big_fish_list
+                # 上升的比例达到一定值才进入大鱼列表
+                uptrend_rate = self.__get_forecast_uptrend_rate(coin_pair)
+                if uptrend_rate > 0.3:
+                    self.big_fish_list.append(forecastitem)
+        print('big fish list: {0}'.format(self.big_fish_list))
 
+    '''一个列表是不是上升趋势，上升趋势的百分比, 输入一个对象列表，和需要排序的KEY'''
+    def __get_uptrend_rate(self, trendlist, trend_key):
+        uptrend_rate = 0
+        lastitemrate = None
+        uptrend_cnt = 0
+        if trendlist is None:
+            return 0
+        for trenditem in trendlist:
+            currtrendrate = trenditem.get(trend_key)
+            if trenditem.get(trend_key) is None:
+                uptrend_rate = 0
+                break
+            # 第一次循环时忽略，只保留第一个值作为比较对象
+            if lastitemrate is None:
+                lastitemrate = trenditem.get(trend_key)
+                continue
+            else:
+                if currtrendrate > lastitemrate:
+                    uptrend_cnt = uptrend_cnt + 1
+            # 保留当次的RATE作为下次比较
+            lastitemrate = trenditem.get(trend_key)
+        # 统计上升比例
+        if len(trendlist) == 0:
+            uptrend_rate = 0
+        else:
+            uptrend_rate = round(uptrend_cnt/len(trendlist),2)
 
+        return uptrend_rate
+
+        pass
 
     '''测试列表读取'''
     def test(self):
+
+        testlist = [{'coin':'doge', 'rate':0.1}, {'coin':'doge', 'rate':0.11},{'coin':'doge', 'rate':0.12}, {'coin':'doge', 'rate':0.1}, {'coin':'doge', 'rate':0.12}]
+        self.__get_uptrend_rate(testlist, 'rate')
         # self.__get_forecast_data()
         # print(str(self.forecast_list))
         # sorted_list = self.get_succ_rate()
