@@ -121,6 +121,7 @@ class Client():
         # If there is exception then continue to redo so that we can get correct order status
         while(except_times<max_except_times and return_order_status==None):
             try:
+                # raise ('error')
                 data = self.btc38clt.getOrderList(coin_code)
                 for order in data:
                     # 查找到有订单则说明没有 成交，是open状态，其它为closed，cancel也认为是closed
@@ -128,11 +129,12 @@ class Client():
                         return_order_status='open'
                         break
                 # Default to closed if cannot find in the open list
-                if return_order_status==None:
+                # if return_order_status is None:
+                else:
                     return_order_status='closed'
-            except:
+            except Exception as e:
                 except_times=except_times+1
-                print('btc38: Get order status has %d errors happened!' % except_times)
+                print('btc38: Get order status has %d errors happened, %s!' % (except_times, str(e)))
 
         return return_order_status
 

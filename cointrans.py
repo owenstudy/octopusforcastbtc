@@ -147,7 +147,6 @@ class CoinTrans(object):
             if orderitem.sell_status == const.ORDER_STATUS_OPEN:
                 order_status = self.order_market.getOrderStatus(orderitem.sell_order_id, orderitem.priceitem.coin)
                 orderitem.sell_status = order_status
-                orderitem.sell_date = common.get_curr_time_str()
                 ormmysql.updateorder(orderitem)
                 if order_status == const.ORDER_STATUS_CLOSED:
                     orderitem.sell_date = common.get_curr_time_str()
@@ -381,10 +380,10 @@ if __name__ == '__main__':
     # trans.test_coin_trans()
     #
     #
-    pricebuffer = priceupdate.PriceBuffer('btc38', save_log_flag=False)
-    priceitem = pricebuffer.getpriceitem('btc38', 'doge_cny')
+    # pricebuffer = priceupdate.PriceBuffer('btc38', save_log_flag=False)
+    # priceitem = pricebuffer.getpriceitem('btc38', 'doge_cny')
 
-    trans.cancle_ot_buy_order(10)
+    # trans.cancle_ot_buy_order(10)
     #
     # trans.cancle_ot_buy_order(50)
     # trans.sell_check()
@@ -394,7 +393,7 @@ if __name__ == '__main__':
     # # 循环检查OPEN订单是不是满足卖出条件
     #
     # orderstatus1 = trans.coin_trans( 'btc38', 'buy', 0.009, priceitem)
-    trans.sell_check()
+    # trans.sell_check()
     # trans.update_order_status()
 
     # orderstatus2 = trans2.coin_trans( 'btc38', 'buy', 0.009, priceitem2)
