@@ -114,7 +114,7 @@ class CoinTrans(object):
             if newpriceitem is not None and curroderitem.buy_status == const.ORDER_STATUS_CLOSED:
                 # 测试，卖单提前生成好，等待直接成效
                 rounding_num = publicparameters.rounding_unit(curroderitem.coin)
-                default_sell_price = round(curroderitem.buy_price*(1+publicparameters.SELL_PROFIT_RATE),rounding_num)
+                default_sell_price = round(curroderitem.buy_price*(1+publicparameters.SELL_PROFIT_RATE*2),rounding_num)
                 trans_status = self.coin_trans(self.market, 'sell', default_sell_price, curroderitem.priceitem)
                 # if newpriceitem.buy_price >= curroderitem.buy_price*(1+publicparameters.SELL_PROFIT_RATE):
                 #     # 执行实际的卖出操作
