@@ -214,7 +214,7 @@ if __name__=='__main__':
     for buy in market_depht.buy:
         print(buy)
 
-    order = btc38clt.submitOrder('doge_cny', 'sell', 0.01616, 100)
+    order = btc38clt.submitOrder('bcc_cny', 'sell', 2250, 0.0122)
     order_id=order.order_id
     order2=btc38clt.submitOrder('doge_cny', 'buy', 0.01616, 100)
     order_status=btc38clt.getOrderStatus(order2.order_id,'doge')

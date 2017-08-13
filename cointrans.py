@@ -113,8 +113,9 @@ class CoinTrans(object):
             newpriceitem = pricebuffer.getpriceitem(self.market, curroderitem.coin+'_cny')
             if newpriceitem is not None and curroderitem.buy_status == const.ORDER_STATUS_CLOSED:
                 # 测试，卖单提前生成好，等待直接成效
-                rounding_num = publicparameters.rounding_unit(curroderitem.coin)
-                default_sell_price = round(curroderitem.buy_price*(1+publicparameters.SELL_PROFIT_RATE*2),rounding_num)
+                rounding_num_unit = publicparameters.rounding_unit(curroderitem.coin)
+                rounding_num_price = publicparameters.rounding_price(curroderitem.coin)
+                default_sell_price = round(curroderitem.buy_price*(1+publicparameters.SELL_PROFIT_RATE*2),rounding_num_price)
                 trans_status = self.coin_trans(self.market, 'sell', default_sell_price, curroderitem.priceitem)
                 # if newpriceitem.buy_price >= curroderitem.buy_price*(1+publicparameters.SELL_PROFIT_RATE):
                 #     # 执行实际的卖出操作
@@ -300,7 +301,7 @@ class CoinTrans(object):
             if orderitem is None:
                 return False
             else:
-                trans_units = orderitem.buy_units
+                trans_units = round(orderitem.buy_units, rounding_unit)
             # 卖出订单时检查买入订单的状态，如果没有买入成功则停止卖出，返回失败
             if orderitem.buy_status != const.ORDER_STATUS_CLOSED:
                 # print('买入订单还没有成交，卖出取消!')
