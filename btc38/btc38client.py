@@ -119,7 +119,7 @@ class Client():
         max_except_times=5
         return_order_status=None
         # If there is exception then continue to redo so that we can get correct order status
-        while(except_times<max_except_times and return_order_status==None):
+        while(except_times<max_except_times and return_order_status is None):
             try:
                 # raise ('error')
                 data = self.btc38clt.getOrderList(coin_code)
@@ -133,6 +133,7 @@ class Client():
                 else:
                     return_order_status='closed'
             except Exception as e:
+                time.sleep(2)
                 except_times=except_times+1
                 print('btc38: Get order status has %d errors happened, %s!' % (except_times, str(e)))
 

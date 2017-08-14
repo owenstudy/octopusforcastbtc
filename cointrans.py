@@ -143,10 +143,16 @@ class CoinTrans(object):
         for orderitem in order_list:
             if orderitem.buy_status == const.ORDER_STATUS_OPEN:
                 order_status = self.order_market.getOrderStatus(orderitem.buy_order_id, orderitem.priceitem.coin)
+                # 处理状态取值时错误的情况
+                if order_status is None:
+                    continue
                 orderitem.buy_status = order_status
                 ormmysql.updateorder(orderitem)
             if orderitem.sell_status == const.ORDER_STATUS_OPEN:
                 order_status = self.order_market.getOrderStatus(orderitem.sell_order_id, orderitem.priceitem.coin)
+                # 处理状态取值时错误的情况
+                if order_status is None:
+                    continue
                 orderitem.sell_status = order_status
                 ormmysql.updateorder(orderitem)
                 if order_status == const.ORDER_STATUS_CLOSED:
@@ -332,7 +338,9 @@ class CoinTrans(object):
             return False
         else:
             order_status = order_market.getOrderStatus(order_id, coin)
-
+            # 如果状态为None，说明取状态有异常，对于卖出默认为OPEN，防止出现多现卖出状态设置为None，继续卖出的情况
+            if order_status is None:
+                order_status = const.ORDER_STATUS_OPEN
         # 保留交易时的相关信息到orderitem对象中
         if trans_type == const.TRANS_TYPE_BUY:
             orderitem.buy_order_id = order_id

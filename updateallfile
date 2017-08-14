@@ -12,3 +12,6 @@ git pull
 cd ..
 cd 3octopusforcastbtc
 git pull
+cd ..
+cd bigoctopusforcastbtc
+git pull
