@@ -52,7 +52,7 @@ class DailySummary(object):
                     priceitem = None
                     # 循环取价格，防止中间出现取价格异常
                     while (run_time <max_num and priceitem is None):
-                        priceitem = pricebuff.getpriceitem(market, coin+'_cny')
+                        priceitem = pricebuff.getpriceitem(market, coin+'_btc')
                         run_time = run_time + 1
 
                     if priceitem is None:

@@ -33,7 +33,7 @@ class PriceManage(object):
 
     def __set_bter_price(self):
         bterprice=bterapi.bterclient.Client()
-        pricedata_cny=bterprice.getPrice(self.__coincode + '_cny')
+        pricedata_cny=bterprice.getPrice(self.__coincode + '_btc')
         try:
             if pricedata_cny.get('result')=='true':
                 # cny价格的信息
@@ -76,7 +76,7 @@ class PriceManage(object):
 
     def __set_btc38_price(self):
         btc38clt=btc38.btc38client.Client()
-        pricedata_cny=btc38clt.getPrice(self.__coincode + '_cny')
+        pricedata_cny=btc38clt.getPrice(self.__coincode + '_btc')
         # cny价格的信息
         try:
             sell_cny = pricedata_cny.ticker.get('sell')

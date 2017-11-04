@@ -54,7 +54,7 @@ if __name__=='__main__':
 
 
     bterorder=OrderManage('bter')
-    order=bterorder.submitOrder('doge_cny','sell',0.01,100)
+    order=bterorder.submitOrder('doge_btc','sell',0.01,100)
     cancelorder=bterorder.cancelOrder(order.order_id,'doge')
 
     orderstatus=bterorder.getOrderStatus(order.order_id,'doge')

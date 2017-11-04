@@ -5,6 +5,7 @@ __author__ = 'Owen_Study/owen_study@126.com'
 # Create date: 17-7-19 下午9:08
 
 import urlaccess, json,common, heapq
+from btc38.config import apiconfig
 
 '''系统运行时需要用到的一些参数'''
 
@@ -107,7 +108,8 @@ def get_rounding_len(floatnum):
 
 # 从网站获取所有的COIN价格信息，从价格信息中取得价格和交易单元的小数位
 def get_rounding_setting(market):
-    pricedata = urlaccess.get_content('http://api.btc38.com/v1/ticker.php?c=all&mk_type=cny')
+    baseurl = apiconfig.get('baseurl')
+    pricedata = urlaccess.get_content(baseurl+'/ticker.php?c=all&mk_type=btc')
     # 返回的字节转换成字符串
     price = pricedata.decode('utf8')
     pricejson= json.loads(price)
@@ -151,19 +153,8 @@ def get_rounding_setting(market):
 # rounding_price = get_rounding_setting('btc38')
 
 # 注意BCC的价格必须为0，否则会报错，BTC38的约定规则有问题
-rounding_price_setting = \
-    {'wdc': {'price': 4, 'unit': 6}, 'ncs': {'price': 4, 'unit': 6}, 'ybc': {'price': 1, 'unit': 6},
-     'xlm': {'price': 4, 'unit': 6}, 'nxt': {'price': 3, 'unit': 5}, 'bcc': {'price': 0, 'unit': 6},
-     'xpm': {'price': 2, 'unit': 5}, 'hlb': {'price': 4, 'unit': 6}, 'xrp': {'price': 4, 'unit': 6},
-     'sys': {'price': 4, 'unit': 6}, 'eth': {'price': 1, 'unit': 6}, 'bts': {'price': 4, 'unit': 6},
-     'eac': {'price': 5, 'unit': 5}, 'vash': {'price': 3, 'unit': 6}, 'mgc': {'price': 3, 'unit': 6},
-     'tag': {'price': 2, 'unit': 6}, 'doge': {'price': 5, 'unit': 5}, 'ric': {'price': 3, 'unit': 6},
-     'ics': {'price': 2, 'unit': 5}, 'xem': {'price': 4, 'unit': 6}, 'xcn': {'price': 4, 'unit': 6},
-     'blk': {'price': 3, 'unit': 6}, 'zcc': {'price': 3, 'unit': 5}, 'dash': {'price': 1, 'unit': 6},
-     'qrk': {'price': 4, 'unit': 6}, 'mec': {'price': 3, 'unit': 6}, 'btc': {'price': 1, 'unit': 6},
-     'ppc': {'price': 2, 'unit': 6}, 'xzc': {'price': 2, 'unit': 6}, 'ltc': {'price': 2, 'unit': 6},
-     'tmc': {'price': 3, 'unit': 6}, 'etc': {'price': 2, 'unit': 5}, 'inf': {'price': 3, 'unit': 5},
-     'ardr': {'price': 4, 'unit': 6}, 'emc': {'price': 2, 'unit': 6}}
+rounding_price_setting =\
+{'hlb': {'price': 5, 'unit': 6}, 'xcn': {'price': 5, 'unit': 6}, 'xzc': {'price': 5, 'unit': 6}, 'bts': {'price': 5, 'unit': 6}, 'blk': {'price': 6, 'unit': 6}, 'emc': {'price': 7, 'unit': 6}, 'xpm': {'price': 7, 'unit': 6}, 'dash': {'price': 4, 'unit': 6}, 'zcc': {'price': 6, 'unit': 4}, 'doge': {'price': 5, 'unit': 6}, 'ric': {'price': 6, 'unit': 6}, 'eth': {'price': 4, 'unit': 6}, 'tmc': {'price': 6, 'unit': 6}, 'sys': {'price': 7, 'unit': 6}, 'inf': {'price': 5, 'unit': 6}, 'ardr': {'price': 5, 'unit': 6}, 'nxt': {'price': 5, 'unit': 5}, 'ltc': {'price': 5, 'unit': 5}, 'tag': {'price': 7, 'unit': 6}, 'mec': {'price': 6, 'unit': 6}, 'eac': {'price': 0, 'unit': 6}, 'qrk': {'price': 6, 'unit': 5}, 'wdc': {'price': 6, 'unit': 5}, 'ncs': {'price': 5, 'unit': 6}, 'mgc': {'price': 6, 'unit': 6}, 'xlm': {'price': 5, 'unit': 6}, 'etc': {'price': 5, 'unit': 6}, 'xem': {'price': 6, 'unit': 5}, 'vash': {'price': 5, 'unit': 6}, 'xrp': {'price': 6, 'unit': 5}, 'bcc': {'price': 4, 'unit': 5}, 'ppc': {'price': 7, 'unit': 6}}
 
 
 # 价格rounding规则

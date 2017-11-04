@@ -110,7 +110,7 @@ class CoinTrans(object):
             pricebuffer = priceupdate.PriceBuffer(self.market, save_log_flag=False)
             # 获取当前的价格
 
-            newpriceitem = pricebuffer.getpriceitem(self.market, curroderitem.coin+'_cny')
+            newpriceitem = pricebuffer.getpriceitem(self.market, curroderitem.coin+'_btc')
             if newpriceitem is not None and curroderitem.buy_status == const.ORDER_STATUS_CLOSED:
                 # 测试，卖单提前生成好，等待直接成效
                 rounding_num_unit = publicparameters.rounding_unit(curroderitem.coin)
@@ -244,7 +244,7 @@ class CoinTrans(object):
     # 交易测试
     def test_coin_trans(self):
         pricebuffer = priceupdate.PriceBuffer('btc38', save_log_flag=False)
-        priceitem = pricebuffer.getpriceitem('btc38', 'doge_cny')
+        priceitem = pricebuffer.getpriceitem('btc38', 'doge_btc')
         # 循环检查OPEN订单是不是满足卖出条件
 
         orderstatus1 = self.coin_trans( 'btc38', 'buy', 0.01224, priceitem)
@@ -254,7 +254,7 @@ class CoinTrans(object):
         while (True):
             self.update_order_status()
             pricebuffer = priceupdate.PriceBuffer('btc38', save_log_flag=False)
-            newpriceitem = pricebuffer.getpriceitem('btc38', 'doge_cny')
+            newpriceitem = pricebuffer.getpriceitem('btc38', 'doge_btc')
             order_list = ormmysql.openorderlist()
             for openorderitem in order_list:
                 if openorderitem.buy_status == const.ORDER_STATUS_CLOSED:
@@ -278,7 +278,7 @@ class CoinTrans(object):
     '''
     def coin_trans(self, market, trans_type, trans_price, price_item):
         coin = price_item.coin
-        coin_pair = coin+'_cny'
+        coin_pair = coin+'_btc'
 
         # 判断是不是满足交易的条件，不满足则退出不进行交易
         if trans_type == const.TRANS_TYPE_BUY:
@@ -390,14 +390,14 @@ if __name__ == '__main__':
     #
     #
     # pricebuffer = priceupdate.PriceBuffer('btc38', save_log_flag=False)
-    # priceitem = pricebuffer.getpriceitem('btc38', 'doge_cny')
+    # priceitem = pricebuffer.getpriceitem('btc38', 'doge_btc')
 
     # trans.cancle_ot_buy_order(10)
     #
     # trans.cancle_ot_buy_order(50)
     # trans.sell_check()
     # # time.sleep(2)
-    # priceitem2 = pricebuffer.getpriceitem('btc38', 'doge_cny')
+    # priceitem2 = pricebuffer.getpriceitem('btc38', 'doge_btc')
     #
     # # 循环检查OPEN订单是不是满足卖出条件
     #
