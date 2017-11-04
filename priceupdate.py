@@ -600,13 +600,13 @@ class MonitorPrice(object):
         # 针对btc38市场进行全部COIN进行查找， TODO 需要进行一个更进一步的排序，同等比例的情况下数量优先
         # sorted_forecast_list = self.monitor_coin_list('btc38', ['doge_cny','xrp_cny','etc_cny','xpm_cny'])
 
-        self.monitor_coin_list('btc38', ['doge_cny', 'btc_cny', 'ltc_cny', 'xrp_cny', 'eth_cny', 'etc_cny', \
-                                    'bts_cny', 'xlm_cny', 'nxt_cny', 'ardr_cny', 'blk_cny', 'xem_cny', \
-                                    'emc_cny', 'dash_cny', 'xzc_cny', 'sys_cny', 'vash_cny', 'ics_cny', \
-                                    'eac_cny', 'xcn_cny', 'ppc_cny', 'mgc_cny', 'hlb_cny', 'zcc_cny', \
-                                    'xpm_cny', 'ncs_cny', 'ybc_cny', 'mec_cny', \
-                                    'wdc_cny', 'qrk_cny', 'ric_cny', \
-                                    'tag_cny', 'tmc_cny','inf_cny','bcc_cny'])
+        self.monitor_coin_list('btc38', ['doge_btc', 'ltc_btc', 'xrp_btc', 'eth_btc', 'etc_btc', \
+                                    # 'bts_btc', 'xlm_btc', 'nxt_btc', 'ardr_btc', 'blk_btc', 'xem_btc', \
+                                    # 'emc_btc', 'dash_btc', 'xzc_btc', 'sys_btc', 'vash_btc', 'ics_btc', \
+                                    # 'eac_btc', 'xcn_btc', 'ppc_btc', 'mgc_btc', 'hlb_btc', 'zcc_btc', \
+                                    # 'xpm_btc', 'ncs_btc', 'ybc_btc', 'mec_btc', \
+                                    # 'wdc_btc', 'qrk_btc', 'ric_btc', \
+                                     'tmc_btc','bcc_btc'])
         # return sorted_forecast_list
 '''捕捉大鱼，短时候内上升很快，有较大潜力强力上扬的COIN，买入一大笔霆投资'''
 class BigFish( object ):
@@ -770,13 +770,13 @@ if __name__ == '__main__':
     #                                         'wdc_cny', 'qrk_cny', 'dgc_cny', 'bec_cny', 'ric_cny', 'src_cny', \
     #                                         'tag_cny', 'med_cny', 'tmc_cny','inf_cny'])
 
-    # now1=datetime.datetime.now()
-    # time.sleep(2)
-    # now2=datetime.datetime.now()
-    # # print (now2-now1)
-    # price1=PriceItem(now1,'doge',0.022,20000,0.024,30000)
-    # price2=PriceItem(now2,'doge',0.025,35000,0.024,10000)
-    # price3=PriceItem(now2,'doge',0.028,50000,0.024,4000)
+    now1=datetime.datetime.now()
+    time.sleep(2)
+    now2=datetime.datetime.now()
+    # print (now2-now1)
+    price1=PriceItem(now1,'doge',0.022,20000,0.024,30000)
+    price2=PriceItem(now2,'doge',0.025,35000,0.024,10000)
+    price3=PriceItem(now2,'doge',0.028,50000,0.024,4000)
     # price4=PriceItem(now2,'doge',0.030,50000,0.024,4000)
     # price5=PriceItem(now2,'doge',0.031,50000,0.024,4000)
     # price6=PriceItem(now2,'doge',0.032,50000,0.024,4000)

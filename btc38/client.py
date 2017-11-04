@@ -6,7 +6,7 @@ import json
 import time
 import hashlib
 
-BASE_URL = 'http://api.btc38.com/v1/'
+BASE_URL = 'http://api.aex.com/'
 
 API_PATH_DICT = {
     # GET
@@ -82,11 +82,11 @@ class Client():
         resp.close()
         return result
 
-    def getTickers(self,mk_type='cny',c='bts'):
+    def getTickers(self,mk_type='btc',c='bts'):
         result = self.request('tickers',c=c, mk_type = mk_type)
         return json.loads(result[0].decode('utf-8'))
 
-    def getDepth(self, mk_type='cny', c='bts'):
+    def getDepth(self, mk_type='btc', c='bts'):
         result = self.request('depth', c=c, mk_type=mk_type)
         return json.loads(result[0].decode('utf-8'))
 
@@ -116,7 +116,7 @@ class Client():
         return json.loads(result[0].decode('utf-8'))
 
 
-    def getMyTradeList(self,mk_type='cny',coinname='bts',page=1):
+    def getMyTradeList(self,mk_type='btc',coinname='bts',page=1):
         timestamp, MD5 = self.getMD5()
         params = {'key': self.access_key, 'time': timestamp, 'md5': MD5, 'mk_type': mk_type, 'coinname': coinname, 'page':page}
         result = self.request("mytrades", params)

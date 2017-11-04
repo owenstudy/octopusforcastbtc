@@ -1,0 +1,4 @@
+{"database": {"username":"coin", "password":"Windows2000", "ip":"192.168.1.104", "port":3306, "dbname": "coins"},
+ "transaction":{"TRANS_AMOUNT_PER_ORDER":0.0002, "MAX_OPEN_ORDER_POOL":2, "SELL_PROFIT_RATE":0.012, "CANCEL_DURATION":1800,"COIN_MAX_RATE_IN_OPEN_ORDERS":0.35}
+
+}
