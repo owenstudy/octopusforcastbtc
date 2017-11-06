@@ -17,15 +17,15 @@ create user coin identified by 'Windows2000';
     buy_order_id INT,
     buy_date VARCHAR(100),
     coin VARCHAR(100),
-    buy_price FLOAT(10,5),
-    buy_units FLOAT(10,5),
-    buy_amount FLOAT(10,5),
+    buy_price FLOAT(14,10),
+    buy_units FLOAT(14,10),
+    buy_amount FLOAT(14,10),
     buy_status VARCHAR(100),
     sell_order_id INT,
     sell_date VARCHAR(100),
-    sell_price FLOAT(10,5),
-    sell_units FLOAT(10,5),
-    sell_amount FLOAT(10,5),
+    sell_price FLOAT(14,10),
+    sell_units FLOAT(14,10),
+    sell_amount FLOAT(14,10),
     sell_status VARCHAR(100),
     priceitem VARCHAR(1000),
     PRIMARY KEY (trans_id)
@@ -36,7 +36,8 @@ create user coin identified by 'Windows2000';
 
     drop view v_profit_summary;
     create view v_profit_summary as
-    select date_format(str_to_date(sell_date,'%Y-%m-%d %H:%i:%s'),'%Y-%m-%d') sellDate,sum(round((sell_amount-buy_amount)*2/3,2)) total_profit_amount, count(*) total_trans_count from t_coin_trans_log where sell_status='closed' group by date_format(str_to_date(sell_date,'%Y-%m-%d %H:%i:%s'),'%Y-%m-%d');
+    select date_format(str_to_date(sell_date,'%Y-%m-%d %H:%i:%s'),'%Y-%m-%d') sellDate,sum(round((sell_amount-buy_amount)*2/3,10)) total_profit_amount, count(*) total_trans_count from t_coin_trans_log where sell_status='closed'
+    group by date_format(str_to_date(sell_date,'%Y-%m-%d %H:%i:%s'),'%Y-%m-%d');
 
     drop view v_profit_all;
     create view v_profit_all as
