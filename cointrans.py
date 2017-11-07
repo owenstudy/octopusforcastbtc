@@ -68,7 +68,7 @@ class OrderItem(object):
     def __repr__(self):
         order_detail_format = '{0}|{1}|{2}|{3}|{4}|{5}|{6}|{7}|{8}|{9}|{10}|{11}|{12}|{13}|\n'
         if self.sell_amount is not None:
-            profit_amount = round(self.sell_amount - self.buy_amount,2)
+            profit_amount = round(self.sell_amount - self.buy_amount,10)
         else:
             profit_amount = ''
         return order_detail_format.format(self.market.rjust(8),self.coin.rjust(6), profit_amount, self.buy_order_id,self.buy_date,\
@@ -160,7 +160,7 @@ class CoinTrans(object):
                     ormmysql.updateorder(orderitem)
                     # 把交易记录从交易表转移到LOG表
                     ormmysql.delorder(orderitem)
-                    profit_amount = round(orderitem.sell_amount - orderitem.buy_amount,3)
+                    profit_amount = round(orderitem.sell_amount - orderitem.buy_amount,10)
                     print('{0}:[{1}]{smile}已经成功交易,盈利{2}！ BuyPrice:{3}, SellPrice:{4}, ProfiteRate:{5}'.format(\
                             common.get_curr_time_str(), orderitem.priceitem.coin, profit_amount, orderitem.buy_price, orderitem.sell_price,\
                             publicparameters.SELL_PROFIT_RATE, smile='^_^ '*5))
@@ -360,7 +360,7 @@ class CoinTrans(object):
             orderitem.sell_order_id = order_id
             orderitem.sell_status = order_status
             orderitem.sell_price = trans_price_rounding
-            orderitem.sell_amount = round(trans_units * trans_price_rounding, 2)
+            orderitem.sell_amount = round(trans_units * trans_price_rounding, 10)
             orderitem.sell_units = trans_units
             orderitem.sell_date = common.get_curr_time_str()
             print('{0}:开始[{1}]交易,交易状态:{2}:PriceDate:{3},Coin:{4}, BuyPrice:{5}, SellPrice:{6}, ProfiteRate:{7}'.format(common.get_curr_time_str(), trans_type, order_status,
