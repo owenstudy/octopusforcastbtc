@@ -599,14 +599,15 @@ class MonitorPrice(object):
 
         # 针对btc38市场进行全部COIN进行查找， TODO 需要进行一个更进一步的排序，同等比例的情况下数量优先
         # sorted_forecast_list = self.monitor_coin_list('btc38', ['doge_cny','xrp_cny','etc_cny','xpm_cny'])
-
-        self.monitor_coin_list('btc38', ['doge_btc', 'ltc_btc', 'xrp_btc', 'eth_btc', 'etc_btc', \
-                                    # 'bts_btc', 'xlm_btc', 'nxt_btc', 'ardr_btc', 'blk_btc', 'xem_btc', \
-                                    # 'emc_btc', 'dash_btc', 'xzc_btc', 'sys_btc', 'vash_btc', 'ics_btc', \
-                                    # 'eac_btc', 'xcn_btc', 'ppc_btc', 'mgc_btc', 'hlb_btc', 'zcc_btc', \
-                                    # 'xpm_btc', 'ncs_btc', 'ybc_btc', 'mec_btc', \
-                                    # 'wdc_btc', 'qrk_btc', 'ric_btc', \
-                                     'tmc_btc','bcc_btc'])
+        coin_list =publicparameters.get_monitor_coin_list()
+        self.monitor_coin_list('btc38',coin_list)
+        # self.monitor_coin_list('btc38', ['doge_btc', 'ltc_btc', 'xrp_btc', 'eth_btc', 'etc_btc', \
+        #                             # , 'xlm_btc', 'nxt_btc', 'ardr_btc', 'blk_btc', 'xem_btc', \
+        #                             # 'emc_btc', 'dash_btc', 'xzc_btc', 'sys_btc', 'vash_btc', 'ics_btc', \
+        #                             # 'eac_btc', 'xcn_btc', 'ppc_btc', 'mgc_btc', 'hlb_btc', 'zcc_btc', \
+        #                             # 'xpm_btc', 'ncs_btc', 'ybc_btc', 'mec_btc', \
+        #                             # 'wdc_btc', 'qrk_btc', 'ric_btc', \
+        #                              'tmc_btc','bcc_btc','bts_btc'])
         # return sorted_forecast_list
 '''捕捉大鱼，短时候内上升很快，有较大潜力强力上扬的COIN，买入一大笔霆投资'''
 class BigFish( object ):

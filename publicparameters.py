@@ -48,7 +48,12 @@ def get_db_string():
     finally:
         return dbconnstr
 
-
+# 获取需要处理的coin list
+def get_monitor_coin_list():
+    configjson = get_config_content()
+    coinliststr = configjson.get("coinlist")
+    coinlist = coinliststr.split(',')
+    return coinlist
 
 # 每次交易的金额， RMB
 TRANS_AMOUNT_PER_ORDER = 2
@@ -174,6 +179,8 @@ def rounding_unit(coin):
 
 if __name__ == '__main__':
     # get_db_string()
+    x=get_monitor_coin_list()
+    print(x)
     get_rounding_setting('btc38')
     x = rounding_price('bcc')
     y = rounding_unit('bcc')
