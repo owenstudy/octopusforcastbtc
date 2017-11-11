@@ -386,7 +386,6 @@ class CoinTrans(object):
         pass
 
     # 处理未完成订单的止损操作
-    # TODO
     def stop_lost(self, curr_pricitem):
         open_order_list = ormmysql.openorderlist()
         for open_order in open_order_list:
@@ -403,11 +402,12 @@ class CoinTrans(object):
                     # 更新订单的状态为取消
                     # ormmysql.updateorder(open_order)
                     # 重新卖出，以当前价卖出进行止损
-                    sell_status = self.coin_trans(self.market,const.TRANS_TYPE_SELL,curr_price*0.9,open_order.priceitem)
+                    sell_status = self.coin_trans(self.market,const.TRANS_TYPE_SELL,curr_price,open_order.priceitem)
                     # #  test only
                     # sell_status = True
                     # 止损卖出成功
                     if sell_status is True:
+                        print("-------:(--------订单进行了止损操作,coin:{0},操作时间:{1}".format(open_order.coin,common.get_curr_time_str()))
                         self.update_order_status()
                         pass
                     # 止损卖出失败，继续进行循环操作进行下一次的自动卖出
