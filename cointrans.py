@@ -87,6 +87,10 @@ class CoinTrans(object):
         const.ORDER_STATUS_CANCEL = 'cancelled'
         const.TRANS_TYPE_BUY='buy'
         const.TRANS_TYPE_SELL='sell'
+        # 取消订单状态
+        const.CANCEL_STATUS_SUCC = 'success'
+        const.CANCEL_STATUS_FAIL= 'fail'
+
 
         # 最大的交易订单数，
         self.__max_open_order_pool = publicparameters.MAX_OPEN_ORDER_POOL
@@ -293,6 +297,8 @@ class CoinTrans(object):
         buy_price = price_item.buy_price
         # 交易UNITS
         trans_units = round(self.__trans_amount_per_trans / buy_price, rounding_unit)
+        # 第一次交易卖出时的UNIT和买入UNIT会有一个0.5%的误差
+        newtrans_units = trans_units
         # 对交易价格进行ROUNDING处理
         trans_price_rounding = round(trans_price, rounding_price)
         # 有些价格较贵，金额太小出现UNIT为0的情况，不需要再提交订单
@@ -321,6 +327,10 @@ class CoinTrans(object):
             # 可能出现余额不足的情况
             if bal > trans_units:
                 trans_order = order_market.submitOrder(coin_pair, trans_type, trans_price_rounding, trans_units)
+            # 处理第一次买入出现扣除手续费后卖出时余额不足的情况
+            elif trans_units> bal and trans_units*0.995>bal:
+                newtrans_units = round(trans_units*0.995,rounding_unit)
+                trans_order = order_market.submitOrder(coin_pair, trans_type, trans_price_rounding, newtrans_units)
             # 余额不足的取消卖出交易
             else:
                 orderitem.sell_status = const.ORDER_STATUS_CANCEL
@@ -375,6 +385,39 @@ class CoinTrans(object):
         return True
         pass
 
+    # 处理未完成订单的止损操作
+    # TODO
+    def stop_lost(self, curr_pricitem):
+        open_order_list = ormmysql.openorderlist()
+        for open_order in open_order_list:
+            # 如果当前价格和买入价格小于止损的比例，则执行先取消订单再按当前价格的直接卖出操作
+            curr_price = curr_pricitem.sell_price
+            if curr_price/open_order.buy_price<(1 - publicparameters.STOP_LOST_RATE) and curr_pricitem.coin == open_order.coin:
+            # if curr_pricitem.coin == open_order.coin:
+                status = self.order_market.cancelOrder(open_order.sell_order_id, coin_code=curr_pricitem.coin)
+                # #  TEST usage
+                # status = const.CANCEL_STATUS_SUCC
+                if status == const.CANCEL_STATUS_FAIL:
+                    pass
+                elif status == const.CANCEL_STATUS_SUCC:
+                    # 更新订单的状态为取消
+                    # ormmysql.updateorder(open_order)
+                    # 重新卖出，以当前价卖出进行止损
+                    sell_status = self.coin_trans(self.market,const.TRANS_TYPE_SELL,curr_price*0.9,open_order.priceitem)
+                    # #  test only
+                    # sell_status = True
+                    # 止损卖出成功
+                    if sell_status is True:
+                        self.update_order_status()
+                        pass
+                    # 止损卖出失败，继续进行循环操作进行下一次的自动卖出
+                    else:
+                        pass
+                    pass
+
+
+
+
 
 
 
@@ -385,12 +428,13 @@ if __name__ == '__main__':
     #
     #
     trans = CoinTrans('btc38')
-    trans.update_order_status()
+    # trans.update_order_status()
     # trans.test_coin_trans()
     #
     #
-    # pricebuffer = priceupdate.PriceBuffer('btc38', save_log_flag=False)
-    # priceitem = pricebuffer.getpriceitem('btc38', 'doge_btc')
+    pricebuffer = priceupdate.PriceBuffer('btc38', save_log_flag=False)
+    priceitem = pricebuffer.getpriceitem('btc38', 'bcc_btc')
+    trans.stop_lost(priceitem)
 
     # trans.cancle_ot_buy_order(10)
     #

@@ -189,12 +189,10 @@ if __name__=='__main__':
     #print(submit.order_id)
     #clt = client.getOrderStatus(367892140)
     #print(clt)
-    """
         #test open order list
-        open_order_list=client.getOpenOrderList('doge_cny')
-        for order in open_order_list:
-            print('order_id:%s,trans_type:%s,trans_unit:%f'%(order.order_id,order.trans_type,float(order.trans_unit)))
-    """
+    open_order_list=client.getOpenOrderList('bcc_btc')
+    for order in open_order_list:
+        print('order_id:%s,trans_type:%s,trans_unit:%f'%(order.order_id,order.trans_type,float(order.trans_unit)))
 
 
     btc38clt=Client()

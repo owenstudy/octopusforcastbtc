@@ -502,6 +502,11 @@ class MonitorPrice(object):
                         # print(len(publicparameters.ORDER_LIST))
                         # 对OPEN订单进行卖出检查
                         cointrans_data.sell_check()
+                        # 止损检查，如果价格下降低于预定的止损值则执行卖出操作
+                        # 获取当前的价格
+                        pricebuffer = PriceBuffer(market,save_log_flag=False)
+                        newpriceitem = pricebuffer.getpriceitem(market, coin_pair)
+                        cointrans_data.stop_lost(newpriceitem)
                         # 对超时的买单取消
                         # cointrans_data.cancle_ot_buy_order(publicparameters.CANCEL_DURATION)
 
@@ -757,11 +762,11 @@ class BigFish( object ):
 
     pass
 if __name__ == '__main__':
-    bigfish = BigFish('ForecaseData.txt')
-    bigfish.test()
+    # bigfish = BigFish('ForecaseData.txt')
+    # bigfish.test()
     # test monitor coin
-    # monitor_coin=MonitorPrice()
-    # monitor_coin.check_best_coin()
+    monitor_coin=MonitorPrice()
+    monitor_coin.check_best_coin()
 
     # monitor_coin.monitor_coin_list('btc38',['doge_cny','btc_cny','ltc_cny', 'xrp_cny', 'eth_cny', 'etc_cny', \
     #                                         'bts_cny', 'xlm_cny', 'nxt_cny', 'ardr_cny', 'blk_cny', 'xem_cny', \
