@@ -512,6 +512,8 @@ class MonitorPrice(object):
 
                         cointrans_data.update_order_status()
                         cointrans_data.cancle_ot_buy_order(publicparameters.CANCEL_DURATION)
+                        # 增加把网站的成交记录保存到表中以便进行统计盈利情况
+                        cointrans_data.save_aex_trans(coin_pair)
                     if runtime % 100 == 0:
                         print('Run {0}, 目前还未完成的订单有:{1}'.format(runtime, ormmysql.openordercount()))
                         # 获取当前COIN中预测可以买入的列表
@@ -545,6 +547,7 @@ class MonitorPrice(object):
                         daily_summary = DailySummary([market])
                         # 获取当前时间的余额信息
                         daily_summary.get_balance()
+
 
                 except Exception as e:
                     print('处理{0}时出现错误:{1}'.format(coin_pair, str(e)))

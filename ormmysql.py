@@ -15,9 +15,10 @@ from sqlalchemy.dialects.mysql import \
     LONGBLOB, LONGTEXT, MEDIUMBLOB, MEDIUMINT, MEDIUMTEXT, NCHAR, \
     NUMERIC, NVARCHAR, REAL, SET, SMALLINT, TEXT, TIME, TIMESTAMP, \
     TINYBLOB, TINYINT, TINYTEXT, VARBINARY, VARCHAR, YEAR
-import cointrans, json
+import cointrans, json, btc38.btc38client
 import common, priceupdate
 import publicparameters
+
 # 表的属性描述对象
 metadata = MetaData()
 
@@ -86,6 +87,19 @@ OpenOrderView = Table(
     Column('sell_amount', FLOAT),
     Column('priceitem', VARCHAR(1000))
 )
+# 网站交易的历史记录
+OrderTransList = Table(
+    "t_aex_trans", metadata,
+    Column('trans_id', INTEGER, primary_key=True),
+    Column('id', INTEGER),
+    Column('coin', VARCHAR(100)),
+    Column('price', FLOAT),
+    Column('volume', FLOAT),
+    Column('btcvolume', FLOAT),
+    Column('buyer_id', VARCHAR(100)),
+    Column('seller_id', VARCHAR(100)),
+    Column('trans_time', VARCHAR(100),)
+)
 
 # 创建数据库连接,MySQLdb连接方式
 # My laptop PC DB
@@ -108,6 +122,10 @@ class MapperOrderLog(object):
 class MapperAllOpenView(object):
     pass
 
+# 所有aex网站中的交易历史
+class MapperOrderTransList(object):
+    pass
+
 
 # 把表映射到类
 mapper(MapperOrder, OrderItemTable)
@@ -115,6 +133,8 @@ mapper(MapperOrder, OrderItemTable)
 mapper(MapperOrderLog, OrderItemTableLog)
 # 所有DB中的open order列表
 mapper(MapperAllOpenView, OpenOrderView)
+# 所有aex网站中的交易历史
+mapper(MapperOrderTransList, OrderTransList)
 
 
 # 创建了一个自定义了的 Session类
@@ -295,24 +315,51 @@ def allopenorderlist():
         recordtoorder(orderrecord, orderitem)
         orderlist.append(orderitem)
     return orderlist
-
+# 保存从aex网站获取的交易数据
+def saveaextrans(transitem):
+    query = session.query(MapperOrderTransList)
+    # 检查记录是不是存在，如果不存在则保存
+    existing_trans = query.filter_by(id=transitem.id).first()
+    if existing_trans is None:
+        newtransitem = MapperOrderTransList()
+        newtransitem.id=transitem.id
+        newtransitem.coin=transitem.coin
+        newtransitem.price=transitem.price
+        newtransitem.volume=transitem.volume
+        newtransitem.btcvolume=transitem.btcvolume
+        newtransitem.buyer_id=transitem.buyer_id
+        newtransitem.seller_id=transitem.seller_id
+        newtransitem.trans_time=transitem.trans_time
+        # submit order to db
+        session.add(newtransitem)
+        session.flush()
+        session.commit()
+    pass
 def ormtest():
+
+    # test save aex trans list
+    client = btc38.btc38client.Client()
+    trade_list = client.getMyTradeList('bcc_btc')
+    for transitem  in trade_list:
+        aextransitem = cointrans.AEXTransItem(transitem)
+        saveaextrans(aextransitem)
+
     # test save order
-    orderitem = cointrans.OrderItem('btc38','ltc')
-
-    orderitem.buy_order_id = 1234
-    orderitem.buy_status = 'open'
-    orderitem.buy_price = 1.1222
-    orderitem.buy_amount = 20
-    orderitem.buy_units = 18
-    orderitem.buy_date = common.get_curr_time_str()
-
-    pricebuffer = priceupdate.PriceBuffer('btc38', save_log_flag=False)
-    priceitem = pricebuffer.getpriceitem('btc38', 'doge_cny')
+    # orderitem = cointrans.OrderItem('btc38','ltc')
     #
-    orderitem.priceitem = priceitem
-
-    saveorder(orderitem)
+    # orderitem.buy_order_id = 1234
+    # orderitem.buy_status = 'open'
+    # orderitem.buy_price = 1.1222
+    # orderitem.buy_amount = 20
+    # orderitem.buy_units = 18
+    # orderitem.buy_date = common.get_curr_time_str()
+    #
+    # pricebuffer = priceupdate.PriceBuffer('btc38', save_log_flag=False)
+    # priceitem = pricebuffer.getpriceitem('btc38', 'doge_cny')
+    # #
+    # orderitem.priceitem = priceitem
+    #
+    # saveorder(orderitem)
     # saveorderlog(orderitem)
     # updateorder(orderitem)
     # delorder(orderitem)

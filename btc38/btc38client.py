@@ -4,6 +4,7 @@ import urlaccess
 import json,time,datetime
 import openorderlist
 from btc38.config import apiconfig
+from btc38.config import base_currency
 import pricemanage
 
 '''统一接口'''
@@ -17,6 +18,9 @@ class Client():
     def __init__(self):
         #获取API信息
         self.btc38clt = btc38.client.Client(key, secret, accountid)
+        # 基础的交易货币
+        self.basecurrcode = base_currency.get('basecurrcode','btc')
+
         pass
 
     #提交定单，只需要传入参数就直接执行
@@ -182,41 +186,63 @@ class Client():
         price=self.btc38clt.getTickers(coin_pair.split('_')[1],coin_pair.split('_')[0])
         priceobj = urlaccess.JSONObject(price)
         return priceobj
+    # 获取交易的历史记录
+    def getMyTradeList(self,coin_code):
+
+        lastpage = False
+        currpage = 0
+        all_trans_list = []
+        # 循环取出所有的交易历史记录，先是全部遍历，等记录过多时再进行额外处理
+        while lastpage is not True:
+            trade_list = self.btc38clt.getMyTradeList(self.basecurrcode,coin_code,currpage)
+            if len(trade_list) != 0:
+                all_trans_list.extend(trade_list)
+                currpage = currpage +1
+            else:
+                lastpage = True
+        # for trad        eitem in trade_list:
+        #     pass
+        #     print("{0}".format(tradeitem))
+
+        return all_trans_list
 
 if __name__=='__main__':
     client = Client()
-    #submit=client.submitOrder('doge_cny','sell',0.03,100)
-    #print(submit.order_id)
-    #clt = client.getOrderStatus(367892140)
-    #print(clt)
-        #test open order list
-    open_order_list=client.getOpenOrderList('bcc_btc')
-    for order in open_order_list:
-        print('order_id:%s,trans_type:%s,trans_unit:%f'%(order.order_id,order.trans_type,float(order.trans_unit)))
 
-
-    btc38clt=Client()
-    """
-    bal=btc38clt.getMyBalance('doge')
-    print(bal)
-    neworder=btc38clt.submitOrder('doge_cny','sell',0.03,2000)
-    print(neworder)
-    bal=btc38clt.getMyBalance('doge')
-    print(bal)
-    cancel=btc38clt.cancelOrder(367711369)
-    print(cancel)
-"""
-    #测试市场尝试
-    market_depht=btc38clt.getMarketDepth('doge','btc')
-    for buy in market_depht.buy:
-        print(buy)
-
-    order = btc38clt.submitOrder('doge_btc', 'sell', 0.01616, 100)
-    order_id=order.order_id
-    # order2=btc38clt.submitOrder('doge_btc', 'buy', 0.01616, 100)
-    # order_status=btc38clt.getOrderStatus(order2.order_id,'doge')
-    cancel_order=btc38clt.cancelOrder(order.order_id,'doge')
-
-    bal=btc38clt.getMyBalance('doge')
-    print(bal)
+    trade_list = client.getMyTradeList('eth')
+    # print("My trade list:{0}".format(trade_list))
+#     #submit=client.submitOrder('doge_cny','sell',0.03,100)
+#     #print(submit.order_id)
+#     #clt = client.getOrderStatus(367892140)
+#     #print(clt)
+#         #test open order list
+#     open_order_list=client.getOpenOrderList('bcc_btc')
+#     for order in open_order_list:
+#         print('order_id:%s,trans_type:%s,trans_unit:%f'%(order.order_id,order.trans_type,float(order.trans_unit)))
+#
+#
+#     btc38clt=Client()
+#     """
+#     bal=btc38clt.getMyBalance('doge')
+#     print(bal)
+#     neworder=btc38clt.submitOrder('doge_cny','sell',0.03,2000)
+#     print(neworder)
+#     bal=btc38clt.getMyBalance('doge')
+#     print(bal)
+#     cancel=btc38clt.cancelOrder(367711369)
+#     print(cancel)
+# """
+#     #测试市场尝试
+#     market_depht=btc38clt.getMarketDepth('doge','btc')
+#     for buy in market_depht.buy:
+#         print(buy)
+#
+#     order = btc38clt.submitOrder('doge_btc', 'sell', 0.01616, 100)
+#     order_id=order.order_id
+#     # order2=btc38clt.submitOrder('doge_btc', 'buy', 0.01616, 100)
+#     # order_status=btc38clt.getOrderStatus(order2.order_id,'doge')
+#     cancel_order=btc38clt.cancelOrder(order.order_id,'doge')
+#
+#     bal=btc38clt.getMyBalance('doge')
+#     print(bal)
 

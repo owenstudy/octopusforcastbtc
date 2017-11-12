@@ -78,6 +78,18 @@ class OrderItem(object):
     def __str__(self):
         return self.__repr__()
 
+'''aex trans item，网站的交易历史记录'''
+class AEXTransItem(object):
+    def __init__(self, transitem ):
+        self.id=transitem.get('id')
+        self.coin=transitem.get('coinname')
+        self.price=transitem.get('price')
+        self.volume=transitem.get('volume')
+        self.btcvolume=float(self.price) * float(self.volume)
+        self.buyer_id=transitem.get('buyer_id')
+        self.seller_id=transitem.get('seller_id')
+        self.trans_time=transitem.get('time')
+
 '''交易类'''
 class CoinTrans(object):
     def __init__(self, market):
@@ -415,7 +427,14 @@ class CoinTrans(object):
                         pass
                     pass
 
-
+    #     得到aex网站的历史交易记录并保存到数据库中
+    def save_aex_trans(self, coin_pair):
+        trans_list = self.order_market.getMyTradeList(coin_pair)
+        # 保存历史记录到数据库表中
+        for transitem in trans_list:
+            aextransitem = AEXTransItem(transitem)
+            ormmysql.saveaextrans(aextransitem)
+        pass
 
 
 
@@ -428,13 +447,16 @@ if __name__ == '__main__':
     #
     #
     trans = CoinTrans('btc38')
+    # test save aex trans list
+    trans.save_aex_trans('bcc_btc')
     # trans.update_order_status()
     # trans.test_coin_trans()
     #
     #
-    pricebuffer = priceupdate.PriceBuffer('btc38', save_log_flag=False)
-    priceitem = pricebuffer.getpriceitem('btc38', 'bcc_btc')
-    trans.stop_lost(priceitem)
+    # test stop lost function
+    # pricebuffer = priceupdate.PriceBuffer('btc38', save_log_flag=False)
+    # priceitem = pricebuffer.getpriceitem('btc38', 'bcc_btc')
+    # trans.stop_lost(priceitem)
 
     # trans.cancle_ot_buy_order(10)
     #

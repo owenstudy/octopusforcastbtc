@@ -38,6 +38,10 @@ class OrderManage:
         coin_code=coin_code_pair.split('_')[0]
         market_type=coin_code_pair.split('_')[1]
         return self.clientapi.getMarketDepth(coin_code,market_type)
+    # 获取交易的历史记录
+    def getMyTradeList(self,coin_code_pair):
+        coin_code=coin_code_pair.split('_')[0]
+        return self.clientapi.getMyTradeList(coin_code)
 
 #test
 if __name__=='__main__':
