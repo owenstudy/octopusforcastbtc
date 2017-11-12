@@ -59,7 +59,7 @@ create user coin identified by 'Windows2000';
     union all
     select coin, trans_time, btcvolume*-1 as btcvolume, 'buy' trans_type from t_aex_trans where buyer_id<>0
     union all
-    select coin,sell_date as trans_time, sell_amount, 'sell' trans_type from t_coin_trans;
+    select coin,sell_date as trans_time, sell_amount, 'sell' trans_type from t_coin_trans where sell_status ='open';
 
     # aex 的盈利明细
     drop view v_aex_profit_summary;
