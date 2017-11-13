@@ -421,9 +421,11 @@ class CoinTrans(object):
                     if sell_status is True:
                         print("-------:(--------订单进行了止损操作,coin:{0},操作时间:{1}".format(open_order.coin,common.get_curr_time_str()))
                         self.update_order_status()
+                        return True
                         pass
                     # 止损卖出失败，继续进行循环操作进行下一次的自动卖出
                     else:
+                        return False
                         pass
                     pass
 

@@ -157,6 +157,12 @@ class PriceBuffer(object):
             # 50％之前每买入一次10秒后再进行买入
             pause_seconds = self.__DEFAULT_BUY_PAUSE_SECONDS
         return pause_seconds
+    '''设置止损暂停买入的时间'''
+    def get_pause_seconds_stop_lost(self):
+        # 默认的止损暂停时间为600秒
+        return 600
+        pass
+
     '''根据POOL 的比例得到校验的标准比例'''
     def __verify_std_rate(self):
         total_open_count = ormmysql.openordercount()
@@ -178,30 +184,57 @@ class PriceBuffer(object):
     def buycheck(self,priceitem):
         # 暂停时间，买入时检查POOL的比例是不是超过一定的比例，会暂停以便平均分布
         pause_seconds = self.get_pause_seconds(priceitem)
+        # 止损检查
+        stop_lost_status = self.stop_lost(priceitem)
+        # stop_lost_status = True
+        if stop_lost_status is True:
+            pause_seconds_stop_lost = self.get_pause_seconds_stop_lost()
+            if pause_seconds_stop_lost > pause_seconds:
+                pause_seconds = pause_seconds_stop_lost
+        else:
+            pause_seconds_stop_lost = 0
+
         checkresult = False
-        pauseresult = False
         verified_rate = self.get_forecast_rate()
         # 根据当前的仓位得到校验的标准比例
         verify_std_rate = self.__verify_std_rate()
+        # 止损的暂停买入操作
+        if stop_lost_status is True:
+            pause_finish = self.pause_buy(priceitem,pause_seconds_stop_lost,pause_seconds_stop_lost)
+        else:
+            pause_finish = None
+        # 正在暂停的操作则停止买入操作
+        if pause_finish is False:
+            checkresult = False
+            return checkresult
         # 只有校验成功率超过一定比例才进行买入操作
         if verified_rate > verify_std_rate:
             checkresult = True
         else:
             checkresult = False
             return checkresult
-
         # 只有通过上面的预测比例后才进行比例的检查
-        # 只有第一次通过预测验证后开始进入买入暂停阶段，本次买入成交
-        if self.__pause_start_time is None:
-            checkresult = True
-        else:
+        # 买入暂停检查
+        pause_finish = self.pause_buy(priceitem,pause_seconds,0)
+        # 只有正在暂停的，返回结果为假
+        if pause_finish is False:
             checkresult = False
+        return checkresult
+        pass
 
+    ''' 暂停买入'''
+    # True 暂停完成， False正在暂停中， None无暂停
+    def pause_buy(self, priceitem, pause_seconds, pause_seconds_stop_lost =0 ):
+        pause_finish = None
         if self.__pause_start_time is None and pause_seconds > 0:
             # 暂停开始时间，只设置一次，然后开始检查，直到暂停结果
             self.__pause_start_time = datetime.datetime.now()
-            if pause_seconds>self.__DEFAULT_BUY_PAUSE_SECONDS:
+            # 已经开始暂停了，但是还没有结束
+            pause_finish = False
+            if pause_seconds>self.__DEFAULT_BUY_PAUSE_SECONDS and pause_seconds_stop_lost == 0:
                 print('{0}: {1}买入暂停，由于超过一半的比例，暂停{2}秒!'.format(common.get_curr_time_str(), priceitem.coin, pause_seconds))
+            elif pause_seconds_stop_lost > 0:
+                print( '{0}: {1}买入暂停，由于进行了止损操作，暂停{2}秒!'.format(common.get_curr_time_str(), priceitem.coin, pause_seconds))
         if self.__pause_start_time is not None:
             currtime = datetime.datetime.now()
             diff = currtime - self.__pause_start_time
@@ -209,17 +242,12 @@ class PriceBuffer(object):
             if diffseconds > pause_seconds:
                 # 暂停结束
                 self.__pause_start_time = None
-                pauseresult = True
+                pause_finish = True
                 if pause_seconds > self.__DEFAULT_BUY_PAUSE_SECONDS:
                     print('{0}: {1}买入暂停结束，共暂停{2}秒!'.format(common.get_curr_time_str(), priceitem.coin, pause_seconds))
-
-        if pauseresult is True:
-            checkresult = True
-        # else:
-        #     checkresult = False
-
-        return checkresult
-        pass
+            else:
+                pause_finish = False
+        return pause_finish
 
     '''更新BUFFER里面的订单状态'''
     '''增加新的价格列表'''
@@ -254,7 +282,40 @@ class PriceBuffer(object):
             # 移除最早的价格
             self.price_buffer.remove(self.price_buffer[0])
 
-
+    # 处理未完成订单的止损操作
+    def stop_lost(self, curr_pricitem):
+        stop_lost_status = False
+        open_order_list = ormmysql.openorderlist()
+        for open_order in open_order_list:
+            # 如果当前价格和买入价格小于止损的比例，则执行先取消订单再按当前价格的直接卖出操作
+            curr_price = curr_pricitem.sell_price
+            if curr_price / open_order.buy_price < (
+                1 - publicparameters.STOP_LOST_RATE) and curr_pricitem.coin == open_order.coin:
+                # if curr_pricitem.coin == open_order.coin:
+                status = self.cointrans_handler.order_market.cancelOrder(open_order.sell_order_id, coin_code=curr_pricitem.coin)
+                # #  TEST usage
+                # status = const.CANCEL_STATUS_SUCC
+                if status == const.CANCEL_STATUS_FAIL:
+                    pass
+                elif status == const.CANCEL_STATUS_SUCC:
+                    # 更新订单的状态为取消
+                    # ormmysql.updateorder(open_order)
+                    # 重新卖出，以当前价卖出进行止损
+                    sell_status = self.cointrans_handler.coin_trans(self.market, const.TRANS_TYPE_SELL, curr_price, open_order.priceitem)
+                    # #  test only
+                    # sell_status = True
+                    # 止损卖出成功
+                    if sell_status is True:
+                        print("-------:(--------订单进行了止损操作,coin:{0},操作时间:{1}".format(open_order.coin,
+                                                                                    common.get_curr_time_str()))
+                        self.update_order_status()
+                        stop_lost_status = True
+                        pass
+                    # 止损卖出失败，继续进行循环操作进行下一次的自动卖出
+                    else:
+                        pass
+                    pass
+        return stop_lost_status
     '''保存每次新增加的价格到LOG表中'''
     def __save_price(self,priceitem):
         if len(self.price_buffer)==1:
@@ -502,11 +563,11 @@ class MonitorPrice(object):
                         # print(len(publicparameters.ORDER_LIST))
                         # 对OPEN订单进行卖出检查
                         cointrans_data.sell_check()
-                        # 止损检查，如果价格下降低于预定的止损值则执行卖出操作
                         # 获取当前的价格
                         pricebuffer = PriceBuffer(market,save_log_flag=False)
                         newpriceitem = pricebuffer.getpriceitem(market, coin_pair)
-                        cointrans_data.stop_lost(newpriceitem)
+                        # 止损检查，如果价格下降低于预定的止损值则执行卖出操作
+                        # stop_lost_status = cointrans_data.stop_lost(newpriceitem)
                         # 对超时的买单取消
                         # cointrans_data.cancle_ot_buy_order(publicparameters.CANCEL_DURATION)
 
