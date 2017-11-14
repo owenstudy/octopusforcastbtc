@@ -90,6 +90,8 @@ class PriceBuffer(object):
             self.newprice(priceitem)
         # 控制的price buffer list
         self.__pricebuffer_list = {}
+        # 止损暂停秒数
+        self.__pause_seconds_stop_lost = 0
 
     # 设置常用常量列表
     def __initconst(self):
@@ -189,6 +191,7 @@ class PriceBuffer(object):
         # stop_lost_status = True
         if stop_lost_status is True:
             pause_seconds_stop_lost = self.get_pause_seconds_stop_lost()
+            self.__pause_seconds_stop_lost= pause_seconds_stop_lost
             if pause_seconds_stop_lost > pause_seconds:
                 pause_seconds = pause_seconds_stop_lost
         else:
@@ -199,8 +202,8 @@ class PriceBuffer(object):
         # 根据当前的仓位得到校验的标准比例
         verify_std_rate = self.__verify_std_rate()
         # 止损的暂停买入操作
-        if stop_lost_status is True:
-            pause_finish = self.pause_buy(priceitem,pause_seconds_stop_lost,pause_seconds_stop_lost)
+        if stop_lost_status is True or self.__pause_start_time is not None:
+            pause_finish = self.pause_buy(priceitem,self.__pause_seconds_stop_lost,self.__pause_seconds_stop_lost)
         else:
             pause_finish = None
         # 正在暂停的操作则停止买入操作
@@ -243,6 +246,7 @@ class PriceBuffer(object):
                 # 暂停结束
                 self.__pause_start_time = None
                 pause_finish = True
+                self.__pause_seconds_stop_lost = 0
                 if pause_seconds > self.__DEFAULT_BUY_PAUSE_SECONDS:
                     print('{0}: {1}买入暂停结束，共暂停{2}秒!'.format(common.get_curr_time_str(), priceitem.coin, pause_seconds))
             else:
