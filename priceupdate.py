@@ -229,7 +229,7 @@ class PriceBuffer(object):
     # True 暂停完成， False正在暂停中， None无暂停
     def pause_buy(self, priceitem, pause_seconds, pause_seconds_stop_lost =0 ):
         pause_finish = None
-        if self.__pause_start_time is None and pause_seconds > 0:
+        if self.__pause_start_time is None and pause_seconds>self.__DEFAULT_BUY_PAUSE_SECONDS:
             # 暂停开始时间，只设置一次，然后开始检查，直到暂停结果
             self.__pause_start_time = datetime.datetime.now()
             # 已经开始暂停了，但是还没有结束
