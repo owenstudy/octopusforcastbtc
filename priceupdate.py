@@ -211,18 +211,26 @@ class PriceBuffer(object):
             checkresult = False
             return checkresult
         # 只有校验成功率超过一定比例才进行买入操作
-        if verified_rate > verify_std_rate:
+        if verified_rate > verify_std_rate and self.__pause_start_time is None:
             checkresult = True
+            # 进行买入暂停操作检查
+            self.pause_buy(priceitem, pause_seconds, 0)
+        # 正在暂停的只需要检查是否结束
+        elif verified_rate > verify_std_rate and self.__pause_start_time is not None:
+            checkresult = False
+            # 检查暂停操作是否结束
+            self.pause_buy(priceitem,pause_seconds,0)
         else:
             checkresult = False
-            return checkresult
-        # 只有通过上面的预测比例后才进行比例的检查
-        # 买入暂停检查
-        pause_finish = self.pause_buy(priceitem,pause_seconds,0)
-        # 只有正在暂停的，返回结果为假
-        if pause_finish is False:
-            checkresult = False
+
         return checkresult
+        # # 只有通过上面的预测比例后才进行比例的检查
+        # # 买入暂停检查
+        # pause_finish = self.pause_buy(priceitem,pause_seconds,0)
+        # # 只有正在暂停的，返回结果为假
+        # if pause_finish is False:
+        #     checkresult = False
+        # return checkresult
         pass
 
     ''' 暂停买入'''
