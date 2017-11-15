@@ -92,7 +92,10 @@ class PriceBuffer(object):
         self.__pricebuffer_list = {}
         # 止损暂停秒数
         self.__pause_seconds_stop_lost = 0
-
+        # 暂停秒数
+        self.__pause_seconds = 0
+        # 暂停的状态
+        self.pause_status = False
     # 设置常用常量列表
     def __initconst(self):
         # 价格趋势常量
@@ -232,7 +235,29 @@ class PriceBuffer(object):
         #     checkresult = False
         # return checkresult
         pass
-
+    '''暂停买入处理'''
+    def pause_buy_new(self, priceitem, pause_seconds, pause_comments):
+        # 暂停判断，检查是否需要暂停
+        if self.pause_status is False:
+            if pause_seconds > self.__DEFAULT_BUY_PAUSE_SECONDS:
+                self.__pause_seconds = pause_seconds
+                # 暂停开始时间，只设置一次，然后开始检查，直到暂停结果
+                self.__pause_start_time = datetime.datetime.now()
+                self.pause_status = True
+                print('{0}: [{1}]买入暂停，暂停[{2}]秒,原因[{3}]!'.format(common.get_curr_time_str(), priceitem.coin, pause_seconds, pause_comments))
+        elif self.pause_status is True:
+            currtime = datetime.datetime.now()
+            diff = currtime - self.__pause_start_time
+            diffseconds = diff.seconds
+            # 暂停结束
+            if diffseconds > self.__pause_seconds:
+                self.pause_status = False
+                self.__pause_start_time = None
+                self.__pause_seconds = 0
+                print('{0}: [{1}]买入暂停结束]!'.format(common.get_curr_time_str(), priceitem.coin))
+            pass
+        return  self.pause_status
+        pass
     ''' 暂停买入'''
     # True 暂停完成， False正在暂停中， None无暂停
     def pause_buy(self, priceitem, pause_seconds, pause_seconds_stop_lost =0 ):
@@ -841,8 +866,8 @@ if __name__ == '__main__':
     # bigfish = BigFish('ForecaseData.txt')
     # bigfish.test()
     # test monitor coin
-    monitor_coin=MonitorPrice()
-    monitor_coin.check_best_coin()
+    # monitor_coin=MonitorPrice()
+    # monitor_coin.check_best_coin()
 
     # monitor_coin.monitor_coin_list('btc38',['doge_cny','btc_cny','ltc_cny', 'xrp_cny', 'eth_cny', 'etc_cny', \
     #                                         'bts_cny', 'xlm_cny', 'nxt_cny', 'ardr_cny', 'blk_cny', 'xem_cny', \
@@ -859,6 +884,7 @@ if __name__ == '__main__':
     price1=PriceItem(now1,'doge',0.022,20000,0.024,30000)
     price2=PriceItem(now2,'doge',0.025,35000,0.024,10000)
     price3=PriceItem(now2,'doge',0.028,50000,0.024,4000)
+
     # price4=PriceItem(now2,'doge',0.030,50000,0.024,4000)
     # price5=PriceItem(now2,'doge',0.031,50000,0.024,4000)
     # price6=PriceItem(now2,'doge',0.032,50000,0.024,4000)
@@ -867,7 +893,9 @@ if __name__ == '__main__':
     # order_market=ordermanage.OrderManage('btc38')
     # price_depth=order_market.getMarketDepth('doge_cny')
     #
-    # pricebuffer=PriceBuffer('btc38')
+    pricebuffer=PriceBuffer('btc38')
+    pricebuffer.pause_buy_new(price1,300,'first pause')
+    pricebuffer.pause_buy_new(price1, 400, 'second pause')
     # pricebuffer.get_pause_seconds(priceitem)
     # buyindi = False
     # while(not buyindi):
