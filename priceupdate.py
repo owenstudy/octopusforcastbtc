@@ -277,8 +277,8 @@ class PriceBuffer(object):
             self.price_forecast_list.append(priceitem)
             # 执行买入操作
             verified_rate = self.get_forecast_rate()
-            if verified_rate > 0:
-                print('{0}: verified rate:{1}'.format(priceitem.coin, verified_rate))
+            if verified_rate > 0.50:
+                print('{0}>0.5: verified rate:{1}'.format(priceitem.coin, verified_rate))
             # 买入检查，看是不是可以买入
             checkresult = self.buycheck(priceitem)
             if checkresult is True:
@@ -608,7 +608,7 @@ class MonitorPrice(object):
                         each_big_fish_list =self.bigfish.big_fish_list
                         # 取每次列表的
                         # self.big_fish_list = self.big_fish_list + each_big_fish_list
-                        print('big fish list of all: {0}'.format(each_big_fish_list))
+                        # print('big fish list of all: {0}'.format(each_big_fish_list))
                         # big fish 列表写入
                         if len(each_big_fish_list) != 0:
                             bigfishfile = open('bigfish.txt','w')
