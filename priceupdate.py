@@ -191,50 +191,30 @@ class PriceBuffer(object):
         pause_seconds = self.get_pause_seconds(priceitem)
         # 止损检查
         stop_lost_status = self.stop_lost(priceitem)
-        # stop_lost_status = True
+        # stop_lost_status = False
         if stop_lost_status is True:
             pause_seconds_stop_lost = self.get_pause_seconds_stop_lost()
-            self.__pause_seconds_stop_lost= pause_seconds_stop_lost
-            if pause_seconds_stop_lost > pause_seconds:
-                pause_seconds = pause_seconds_stop_lost
-        else:
-            pause_seconds_stop_lost = 0
+            self.pause_buy_new(priceitem,pause_seconds_stop_lost,'止损后暂停买入')
 
         checkresult = False
         verified_rate = self.get_forecast_rate()
         # 根据当前的仓位得到校验的标准比例
         verify_std_rate = self.__verify_std_rate()
-        # 止损的暂停买入操作
-        if stop_lost_status is True or self.__pause_start_time is not None:
-            pause_finish = self.pause_buy(priceitem,self.__pause_seconds_stop_lost,self.__pause_seconds_stop_lost)
-        else:
-            pause_finish = None
-        # 正在暂停的操作则停止买入操作
-        if pause_finish is False:
-            checkresult = False
-            return checkresult
+        # verify_std_rate = -1
         # 只有校验成功率超过一定比例才进行买入操作
-        if verified_rate > verify_std_rate and self.__pause_start_time is None:
-            checkresult = True
-            # 进行买入暂停操作检查
-            self.pause_buy(priceitem, pause_seconds, 0)
-        # 正在暂停的只需要检查是否结束
-        elif verified_rate > verify_std_rate and self.__pause_start_time is not None:
-            checkresult = False
-            # 检查暂停操作是否结束
-            self.pause_buy(priceitem,pause_seconds,0)
-        else:
-            checkresult = False
-
+        if verified_rate > verify_std_rate:
+            if self.pause_status is False:
+                checkresult = True
+                # 进行买入暂停操作检查
+                if pause_seconds > self.__DEFAULT_BUY_PAUSE_SECONDS:
+                    self.pause_buy_new(priceitem, pause_seconds, "超过买入比例暂停")
+                else:
+                    self.pause_buy_new(priceitem, pause_seconds, "成功购买后暂停")
+            # 符合条件但是暂停中，这种情况也不再继续买入
+            elif self.pause_status is True:
+                checkresult = False
         return checkresult
-        # # 只有通过上面的预测比例后才进行比例的检查
-        # # 买入暂停检查
-        # pause_finish = self.pause_buy(priceitem,pause_seconds,0)
-        # # 只有正在暂停的，返回结果为假
-        # if pause_finish is False:
-        #     checkresult = False
-        # return checkresult
-        pass
+
     '''暂停买入处理'''
     def pause_buy_new(self, priceitem, pause_seconds, pause_comments):
         # 暂停判断，检查是否需要暂停
@@ -260,7 +240,7 @@ class PriceBuffer(object):
         pass
     ''' 暂停买入'''
     # True 暂停完成， False正在暂停中， None无暂停
-    def pause_buy(self, priceitem, pause_seconds, pause_seconds_stop_lost =0 ):
+    def pause_buy_DEL(self, priceitem, pause_seconds, pause_seconds_stop_lost =0 ):
         pause_finish = None
         if self.__pause_start_time is None and pause_seconds>self.__DEFAULT_BUY_PAUSE_SECONDS:
             # 暂停开始时间，只设置一次，然后开始检查，直到暂停结果
@@ -345,7 +325,6 @@ class PriceBuffer(object):
                     if sell_status is True:
                         print("-------:(--------订单进行了止损操作,coin:{0},操作时间:{1}".format(open_order.coin,
                                                                                     common.get_curr_time_str()))
-                        self.update_order_status()
                         stop_lost_status = True
                         pass
                     # 止损卖出失败，继续进行循环操作进行下一次的自动卖出
@@ -628,17 +607,17 @@ class MonitorPrice(object):
                     if runtime % 100 == 0:
                         # 把预测中的列表输出出来
                         sorted_forecast_list = self.output_forecast_list(market, coin_list)
-                        # 大鱼检查
-                        self.bigfish.get_big_fish_list()
-                        each_big_fish_list =self.bigfish.big_fish_list
-                        # 取每次列表的
-                        # self.big_fish_list = self.big_fish_list + each_big_fish_list
-                        # print('big fish list of all: {0}'.format(each_big_fish_list))
-                        # big fish 列表写入
-                        if len(each_big_fish_list) != 0:
-                            bigfishfile = open('bigfish.txt','w')
-                            bigfishfile.write('{0}:{1}\n'.format(common.get_curr_time_str(),each_big_fish_list))
-                            bigfishfile.close()
+                        # # 大鱼检查
+                        # self.bigfish.get_big_fish_list()
+                        # each_big_fish_list =self.bigfish.big_fish_list
+                        # # 取每次列表的
+                        # # self.big_fish_list = self.big_fish_list + each_big_fish_list
+                        # # print('big fish list of all: {0}'.format(each_big_fish_list))
+                        # # big fish 列表写入
+                        # if len(each_big_fish_list) != 0:
+                        #     bigfishfile = open('bigfish.txt','w')
+                        #     bigfishfile.write('{0}:{1}\n'.format(common.get_curr_time_str(),each_big_fish_list))
+                        #     bigfishfile.close()
 
                     # 增加定时输出报表的功能
                     if runtime % 1000 == 0:
@@ -894,7 +873,13 @@ if __name__ == '__main__':
     # price_depth=order_market.getMarketDepth('doge_cny')
     #
     pricebuffer=PriceBuffer('btc38')
-    pricebuffer.pause_buy_new(price1,300,'first pause')
+    pricebuffer.buycheck(price1)
+    pricebuffer.buycheck(price1)
+    pricebuffer.buycheck(price1)
+    pricebuffer.buycheck(price1)
+    # pricebuffer.buycheck(price1)
+
+    pricebuffer.pause_buy_new(price1,66,'first pause')
     pricebuffer.pause_buy_new(price1, 400, 'second pause')
     # pricebuffer.get_pause_seconds(priceitem)
     # buyindi = False
