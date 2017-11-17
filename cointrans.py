@@ -340,8 +340,8 @@ class CoinTrans(object):
             if bal > trans_units:
                 trans_order = order_market.submitOrder(coin_pair, trans_type, trans_price_rounding, trans_units)
             # 处理第一次买入出现扣除手续费后卖出时余额不足的情况
-            elif trans_units> bal and trans_units*0.995>bal:
-                newtrans_units = round(trans_units*0.995,rounding_unit)
+            elif trans_units> bal and trans_units*0.98>bal:
+                newtrans_units = round(trans_units*0.98,rounding_unit)
                 trans_order = order_market.submitOrder(coin_pair, trans_type, trans_price_rounding, newtrans_units)
             # 余额不足的取消卖出交易
             else:
