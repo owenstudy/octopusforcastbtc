@@ -3,8 +3,8 @@ import btc38.client
 import urlaccess
 import json,time,datetime
 import openorderlist
-from btc38.config import apiconfig
-from btc38.config import base_currency
+from config import apiconfig
+from config import base_currency
 import pricemanage
 
 '''统一接口'''

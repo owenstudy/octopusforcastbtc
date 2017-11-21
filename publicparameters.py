@@ -5,20 +5,21 @@ __author__ = 'Owen_Study/owen_study@126.com'
 # Create date: 17-7-19 下午9:08
 
 import urlaccess, json,common, heapq
-from btc38.config import apiconfig
+import config
 
 '''系统运行时需要用到的一些参数'''
 
 '''取得配置文件内容,返回json字符串'''
 def get_config_content():
     # 从参数表读取参数
-    configf = open("config")
-    configstr = ''
-    for line in configf.readlines():
-        configstr = configstr + line
-
-    # 配置文件的JSON数据对象
-    configjson = json.loads(configstr)
+    # configf = open("config")
+    # configstr = ''
+    # for line in configf.readlines():
+    #     configstr = configstr + line
+    #
+    # # 配置文件的JSON数据对象
+    # configjson = json.loads(configstr)
+    configjson = config.trans_config
 
     return configjson
 
@@ -117,7 +118,7 @@ def get_rounding_len(floatnum):
 
 # 从网站获取所有的COIN价格信息，从价格信息中取得价格和交易单元的小数位
 def get_rounding_setting(market):
-    baseurl = apiconfig.get('baseurl')
+    baseurl = config.apiconfig.get('baseurl')
     pricedata = urlaccess.get_content(baseurl+'/ticker.php?c=all&mk_type=btc')
     # 返回的字节转换成字符串
     price = pricedata.decode('utf8')
@@ -182,7 +183,7 @@ def rounding_unit(coin):
         return rounding_data.get('unit', 2)
 
 if __name__ == '__main__':
-    # get_db_string()
+    get_db_string()
     x=get_monitor_coin_list()
     print(x)
     get_rounding_setting('btc38')
