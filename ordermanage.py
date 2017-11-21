@@ -1,3 +1,5 @@
+# -*- coding: UTF-8 -*-
+
 
 import time,traceback
 import btc38.btc38client

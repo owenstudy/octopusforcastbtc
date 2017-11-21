@@ -1,4 +1,4 @@
-
+# -*- coding: UTF-8 -*-
 import btc38.client
 import urlaccess
 import json,time,datetime
