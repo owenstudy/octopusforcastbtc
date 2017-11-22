@@ -104,9 +104,9 @@ class Client():
             return order_status
 
     # 得到open order list
-    def getOpenOrderList(self, coin_code_pair):
+    def getOpenOrderList(self, coin_code_pair, mk_type='btc'):
         coin_code=coin_code_pair.split('_')[0]
-        order_list = self.btc38clt.getOrderList(coin_code)
+        order_list = self.btc38clt.getOrderList(coin_code,mk_type)
         open_order_list = []
         for order in order_list:
             if order.get('type')=='1':
@@ -126,7 +126,8 @@ class Client():
         # If there is exception then continue to redo so that we can get correct order status
         while(except_times<max_except_times and return_order_status==None):
             try:
-                data = self.btc38clt.getOrderList(coin_code)
+                time.sleep(1)
+                data = self.btc38clt.getOrderList(coin_code,base_currency.get('basecurrcode'))
                 for order in data:
                     # 查找到有订单则说明没有 成交，是open状态，其它为closed，cancel也认为是closed
                     if int(order.get('id')) == int(orderid):
@@ -135,9 +136,10 @@ class Client():
                 # Default to closed if cannot find in the open list
                 if return_order_status==None:
                     return_order_status='closed'
-            except:
+            except Exception as e:
                 except_times=except_times+1
-                print('btc38: Get order status has %d errors happened!' % except_times)
+                print("error:{0}".format(e))
+                print('{0}@btc38: Get order status has {1} errors happened!'.format(coin_code,except_times))
 
         return return_order_status
 
@@ -210,15 +212,15 @@ if __name__=='__main__':
     client = Client()
 
     # price = client.getPrice('ltc_btc')
-    depth = client.getMarketDepth('ltc_btc','btc')
-    trade_list = client.getMyTradeList('eth')
+    depth = client.getMarketDepth('dash','btc')
+    trade_list = client.getMyTradeList('bcc')
     # print("My trade list:{0}".format(trade_list))
-#     #submit=client.submitOrder('doge_cny','sell',0.03,100)
+    # submit=client.submitOrder('doge_btc','buy',0.00000011,1000)
 #     #print(submit.order_id)
 #     #clt = client.getOrderStatus(367892140)
 #     #print(clt)
 #         #test open order list
-#     open_order_list=client.getOpenOrderList('bcc_btc')
+    open_order_list=client.getOpenOrderList('bcc_btc')
 #     for order in open_order_list:
 #         print('order_id:%s,trans_type:%s,trans_unit:%f'%(order.order_id,order.trans_type,float(order.trans_unit)))
 #

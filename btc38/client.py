@@ -107,9 +107,9 @@ class Client():
         params = {'key': self.access_key, 'time': timestamp, 'md5': MD5,'coinname':coincode, 'mk_type': mk_type, 'order_id': order_id}
         return self.request("cancelorder", params)
 
-    def getOrderList(self,coinname = None):
+    def getOrderList(self,coinname = None, mk_type='btc'):
         timestamp, MD5 = self.getMD5()
-        params = {'key': self.access_key, 'time': timestamp, 'md5': MD5, 'coinname':coinname}
+        params = {'key': self.access_key, 'time': timestamp, 'md5': MD5,'mk_type':mk_type, 'coinname':coinname}
         result =  self.request("myorders", params)
         if result == [b'no_order']:
             return []

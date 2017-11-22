@@ -627,7 +627,8 @@ class MonitorPrice(object):
 
 
                 except Exception as e:
-                    print('处理{0}时出现错误:{1}'.format(coin_pair, str(e)))
+                    excepterror = str(e)
+                    print('处理{0}时出现错误:{1}'.format(coin_pair, excepterror))
         # return sorted_forecast_list
         pass
     '''检查BIG FISH并进行相应的处理'''
