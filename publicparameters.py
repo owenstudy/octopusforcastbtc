@@ -112,7 +112,12 @@ def get_rounding_len(floatnum):
     if str(floatnum).split('.')[0] == str(floatnum):
         rounding_num = 0
     else:
-        rounding_num = len('{0}'.format(floatnum).split('.')[1])
+        # have e-7 value
+        if len(str(floatnum).split('e'))>1:
+            afterdotvalue = str(floatnum).split('e')[0].split('.')[1]
+            rounding_num = abs(int(str(floatnum).split('e')[1]))
+        else:
+            rounding_num = len('{0}'.format(floatnum).split('.')[1])
     return rounding_num
 
 
@@ -164,8 +169,7 @@ def get_rounding_setting(market):
 
 # 注意BCC的价格必须为0，否则会报错，BTC38的约定规则有问题
 rounding_price_setting =\
-{'hlb': {'price': 5, 'unit': 6}, 'xcn': {'price': 5, 'unit': 6}, 'xzc': {'price': 5, 'unit': 6}, 'bts': {'price': 5, 'unit': 6}, 'blk': {'price': 6, 'unit': 6}, 'emc': {'price': 7, 'unit': 6}, 'xpm': {'price': 7, 'unit': 6}, 'dash': {'price': 4, 'unit': 6}, 'zcc': {'price': 6, 'unit': 4}, 'doge': {'price': 5, 'unit': 6}, 'ric': {'price': 6, 'unit': 6}, 'eth': {'price': 4, 'unit': 6}, 'tmc': {'price': 6, 'unit': 6}, 'sys': {'price': 7, 'unit': 6}, 'inf': {'price': 5, 'unit': 6}, 'ardr': {'price': 5, 'unit': 6}, 'nxt': {'price': 5, 'unit': 5}, 'ltc': {'price': 5, 'unit': 5}, 'tag': {'price': 7, 'unit': 6}, 'mec': {'price': 6, 'unit': 6}, 'eac': {'price': 0, 'unit': 6}, 'qrk': {'price': 6, 'unit': 5}, 'wdc': {'price': 6, 'unit': 5}, 'ncs': {'price': 5, 'unit': 6}, 'mgc': {'price': 6, 'unit': 6}, 'xlm': {'price': 5, 'unit': 6}, 'etc': {'price': 5, 'unit': 6}, 'xem': {'price': 6, 'unit': 5}, 'vash': {'price': 5, 'unit': 6}, 'xrp': {'price': 6, 'unit': 5}, 'bcc': {'price': 4, 'unit': 5}, 'ppc': {'price': 7, 'unit': 6}}
-
+{'xcn': {'price': 7, 'unit': 6}, 'doge': {'price': 7, 'unit': 5}, 'blk': {'price': 5, 'unit': 6}, 'ncs': {'price': 7, 'unit': 6}, 'etc': {'price': 5, 'unit': 6}, 'ardr': {'price': 5, 'unit': 6}, 'zcc': {'price': 7, 'unit': 6}, 'mgc': {'price': 6, 'unit': 6}, 'bts': {'price': 5, 'unit': 6}, 'vash': {'price': 7, 'unit': 6}, 'xrp': {'price': 5, 'unit': 6}, 'nxt': {'price': 5, 'unit': 6}, 'bcc': {'price': 4, 'unit': 6}, 'qrk': {'price': 6, 'unit': 6}, 'eth': {'price': 4, 'unit': 5}, 'ric': {'price': 5, 'unit': 6}, 'eac': {'price': 0, 'unit': 5}, 'xzc': {'price': 5, 'unit': 6}, 'inf': {'price': 7, 'unit': 5}, 'tag': {'price': 5, 'unit': 6}, 'mec': {'price': 6, 'unit': 6}, 'xem': {'price': 5, 'unit': 6}, 'xpm': {'price': 5, 'unit': 6}, 'wdc': {'price': 6, 'unit': 6}, 'sys': {'price': 5, 'unit': 6}, 'hlb': {'price': 7, 'unit': 6}, 'ltc': {'price': 5, 'unit': 6}, 'xlm': {'price': 6, 'unit': 6}, 'tmc': {'price': 6, 'unit': 8}, 'dash': {'price': 4, 'unit': 8}}
 
 # 价格rounding规则
 def rounding_price(coin):
@@ -186,7 +190,8 @@ if __name__ == '__main__':
     get_db_string()
     x=get_monitor_coin_list()
     print(x)
-    get_rounding_setting('btc38')
+    roundingdata = get_rounding_setting('btc38')
+    print('rounddata:{0}'.format(roundingdata))
     x = rounding_price('bcc')
     y = rounding_unit('bcc')
     print('{0}:{1}'.format(x,y))
