@@ -115,7 +115,7 @@ def get_rounding_len(floatnum):
         # have e-7 value
         if len(str(floatnum).split('e'))>1:
             afterdotvalue = str(floatnum).split('e')[0].split('.')[1]
-            rounding_num = abs(int(str(floatnum).split('e')[1]))
+            rounding_num = abs(int(str(floatnum).split('e')[1]))+len(afterdotvalue)
         else:
             rounding_num = len('{0}'.format(floatnum).split('.')[1])
     return rounding_num
@@ -169,8 +169,7 @@ def get_rounding_setting(market):
 
 # 注意BCC的价格必须为0，否则会报错，BTC38的约定规则有问题
 rounding_price_setting =\
-{'xcn': {'price': 7, 'unit': 6}, 'doge': {'price': 7, 'unit': 5}, 'blk': {'price': 5, 'unit': 6}, 'ncs': {'price': 7, 'unit': 6}, 'etc': {'price': 5, 'unit': 6}, 'ardr': {'price': 5, 'unit': 6}, 'zcc': {'price': 7, 'unit': 6}, 'mgc': {'price': 6, 'unit': 6}, 'bts': {'price': 5, 'unit': 6}, 'vash': {'price': 7, 'unit': 6}, 'xrp': {'price': 5, 'unit': 6}, 'nxt': {'price': 5, 'unit': 6}, 'bcc': {'price': 4, 'unit': 6}, 'qrk': {'price': 6, 'unit': 6}, 'eth': {'price': 4, 'unit': 5}, 'ric': {'price': 5, 'unit': 6}, 'eac': {'price': 0, 'unit': 5}, 'xzc': {'price': 5, 'unit': 6}, 'inf': {'price': 7, 'unit': 5}, 'tag': {'price': 5, 'unit': 6}, 'mec': {'price': 6, 'unit': 6}, 'xem': {'price': 5, 'unit': 6}, 'xpm': {'price': 5, 'unit': 6}, 'wdc': {'price': 6, 'unit': 6}, 'sys': {'price': 5, 'unit': 6}, 'hlb': {'price': 7, 'unit': 6}, 'ltc': {'price': 5, 'unit': 6}, 'xlm': {'price': 6, 'unit': 6}, 'tmc': {'price': 6, 'unit': 8}, 'dash': {'price': 4, 'unit': 8}}
-
+{'sys': {'price': 8, 'unit': 6}, 'tmc': {'price': 6, 'unit': 8}, 'xlm': {'price': 7, 'unit': 6}, 'xpm': {'price': 8, 'unit': 6}, 'ric': {'price': 8, 'unit': 6}, 'mgc': {'price': 8, 'unit': 5}, 'xem': {'price': 7, 'unit': 6}, 'nxt': {'price': 7, 'unit': 6}, 'bts': {'price': 7, 'unit': 6}, 'xzc': {'price': 5, 'unit': 6}, 'doge': {'price': 8, 'unit': 4}, 'etc': {'price': 5, 'unit': 6}, 'xcn': {'price': 8, 'unit': 6}, 'tag': {'price': 8, 'unit': 6}, 'ltc': {'price': 5, 'unit': 6}, 'wdc': {'price': 8, 'unit': 6}, 'bcc': {'price': 4, 'unit': 6}, 'eac': {'price': 0, 'unit': 5}, 'qrk': {'price': 8, 'unit': 6}, 'hlb': {'price': 8, 'unit': 6}, 'vash': {'price': 8, 'unit': 6}, 'zcc': {'price': 8, 'unit': 6}, 'ardr': {'price': 6, 'unit': 6}, 'dash': {'price': 4, 'unit': 8}, 'mec': {'price': 8, 'unit': 6}, 'eth': {'price': 4, 'unit': 6}, 'ncs': {'price': 8, 'unit': 6}, 'xrp': {'price': 7, 'unit': 6}, 'inf': {'price': 8, 'unit': 6}, 'blk': {'price': 7, 'unit': 6}}
 # 价格rounding规则
 def rounding_price(coin):
     rounding_data = rounding_price_setting.get(coin)
