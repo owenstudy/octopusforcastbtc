@@ -149,18 +149,18 @@ class PriceBuffer(object):
         # 超过50％后每增加一个百分比，则暂停1分钟，每前进10％则暂停1小时
         if pool_used_rate >= 0.9:
             # 暂停的秒数
-            pause_seconds = 300*3
+            pause_seconds = 300*4
         elif pool_used_rate >= 0.8:
-            pause_seconds = 240*3
+            pause_seconds = 240*4
         elif pool_used_rate >= 0.7:
-            pause_seconds = 180*3
+            pause_seconds = 180*4
         elif pool_used_rate >= 0.6:
-            pause_seconds = 120*3
+            pause_seconds = 120*4
         elif pool_used_rate >= 0.5:
-            pause_seconds = 60*3
+            pause_seconds = 60*4
         else:
             # 50％之前每买入一次10秒后再进行买入
-            pause_seconds = self.__DEFAULT_BUY_PAUSE_SECONDS
+            pause_seconds = 60*5
         return pause_seconds
     '''设置止损暂停买入的时间'''
     def get_pause_seconds_stop_lost(self):
@@ -172,7 +172,7 @@ class PriceBuffer(object):
     def __verify_std_rate(self):
         total_open_count = ormmysql.openordercount()
         open_rate = total_open_count / publicparameters.MAX_OPEN_ORDER_POOL
-        base_rate =0.25
+        base_rate =0.18
         if open_rate < 0.3:
             verify_rate = base_rate
         elif open_rate < 0.5:

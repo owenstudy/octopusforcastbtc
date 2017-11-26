@@ -211,7 +211,7 @@ class Client():
 if __name__=='__main__':
     client = Client()
 
-    # price = client.getPrice('ltc_btc')
+    price = client.getPrice('ltc_btc')
     depth = client.getMarketDepth('dash','btc')
     trade_list = client.getMyTradeList('bcc')
     # print("My trade list:{0}".format(trade_list))

@@ -167,9 +167,9 @@ def get_rounding_setting(market):
 
 # rounding_price = get_rounding_setting('btc38')
 
-# 注意BCC的价格必须为0，否则会报错，BTC38的约定规则有问题
+# # 注意BCC的价格必须为0，否则会报错，BTC38的约定规则有问题
 rounding_price_setting =\
-{'sys': {'price': 8, 'unit': 6}, 'tmc': {'price': 6, 'unit': 8}, 'xlm': {'price': 7, 'unit': 6}, 'xpm': {'price': 8, 'unit': 6}, 'ric': {'price': 8, 'unit': 6}, 'mgc': {'price': 8, 'unit': 5}, 'xem': {'price': 7, 'unit': 6}, 'nxt': {'price': 7, 'unit': 6}, 'bts': {'price': 7, 'unit': 6}, 'xzc': {'price': 5, 'unit': 6}, 'doge': {'price': 8, 'unit': 4}, 'etc': {'price': 5, 'unit': 6}, 'xcn': {'price': 8, 'unit': 6}, 'tag': {'price': 8, 'unit': 6}, 'ltc': {'price': 5, 'unit': 6}, 'wdc': {'price': 8, 'unit': 6}, 'bcc': {'price': 4, 'unit': 6}, 'eac': {'price': 0, 'unit': 5}, 'qrk': {'price': 8, 'unit': 6}, 'hlb': {'price': 8, 'unit': 6}, 'vash': {'price': 8, 'unit': 6}, 'zcc': {'price': 8, 'unit': 6}, 'ardr': {'price': 6, 'unit': 6}, 'dash': {'price': 4, 'unit': 8}, 'mec': {'price': 8, 'unit': 6}, 'eth': {'price': 4, 'unit': 6}, 'ncs': {'price': 8, 'unit': 6}, 'xrp': {'price': 7, 'unit': 6}, 'inf': {'price': 8, 'unit': 6}, 'blk': {'price': 7, 'unit': 6}}
+{'xzc': {'price': 5, 'unit': 5}, 'xrp': {'price': 7, 'unit': 8}, 'doge': {'price': 8, 'unit': 5}, 'xpm': {'price': 8, 'unit': 6}, 'ncs': {'price': 8, 'unit': 6}, 'vash': {'price': 8, 'unit': 6}, 'tag': {'price': 8, 'unit': 6}, 'eth': {'price': 4, 'unit': 6}, 'xem': {'price': 7, 'unit': 8}, 'nxt': {'price': 7, 'unit': 6}, 'ltc': {'price': 5, 'unit': 8}, 'zcc': {'price': 8, 'unit': 6}, 'dash': {'price': 4, 'unit': 8}, 'hlb': {'price': 8, 'unit': 6}, 'eac': {'price': 0, 'unit': 4}, 'ardr': {'price': 6, 'unit': 6}, 'blk': {'price': 7, 'unit': 6}, 'xcn': {'price': 8, 'unit': 6}, 'xlm': {'price': 7, 'unit': 6}, 'etc': {'price': 5, 'unit': 8}, 'qrk': {'price': 8, 'unit': 7}, 'mec': {'price': 8, 'unit': 6}, 'wdc': {'price': 8, 'unit': 6}, 'mgc': {'price': 8, 'unit': 6}, 'tmc': {'price': 6, 'unit': 7}, 'bcc': {'price': 4, 'unit': 7}, 'ric': {'price': 8, 'unit': 7}, 'bcd': {'price': 8, 'unit': 8}, 'sys': {'price': 7, 'unit': 6}, 'bts': {'price': 7, 'unit': 6}, 'inf': {'price': 8, 'unit': 6}}
 # 价格rounding规则
 def rounding_price(coin):
     rounding_data = rounding_price_setting.get(coin)
