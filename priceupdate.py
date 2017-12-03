@@ -160,7 +160,7 @@ class PriceBuffer(object):
             pause_seconds = 60*4
         else:
             # 50％之前每买入一次10秒后再进行买入
-            pause_seconds = 60*5
+            pause_seconds = 50
         return pause_seconds
     '''设置止损暂停买入的时间'''
     def get_pause_seconds_stop_lost(self):
@@ -208,11 +208,13 @@ class PriceBuffer(object):
                 # 进行买入暂停操作检查
                 if pause_seconds > self.__DEFAULT_BUY_PAUSE_SECONDS:
                     self.pause_buy_new(priceitem, pause_seconds, "超过买入比例暂停")
-                else:
-                    self.pause_buy_new(priceitem, pause_seconds, "成功购买后暂停")
+                # else:
+                #     self.pause_buy_new(priceitem, pause_seconds, "成功购买后暂停")
             # 符合条件但是暂停中，这种情况也不再继续买入
             elif self.pause_status is True:
                 checkresult = False
+        # # 检查暂停情况，解除处理中的暂停
+        # self.pause_buy_new(None, 0, "")
         return checkresult
 
     '''暂停买入处理'''
@@ -224,7 +226,7 @@ class PriceBuffer(object):
                 # 暂停开始时间，只设置一次，然后开始检查，直到暂停结果
                 self.__pause_start_time = datetime.datetime.now()
                 self.pause_status = True
-                print('{0}: [{1}]买入暂停，暂停[{2}]秒,原因[{3}]!'.format(common.get_curr_time_str(), priceitem.coin, pause_seconds, pause_comments))
+                print('{0}: [{1}]暂停，暂停[{2}]秒,原因[{3}]!'.format(common.get_curr_time_str(), priceitem.coin, pause_seconds, pause_comments))
         elif self.pause_status is True:
             currtime = datetime.datetime.now()
             diff = currtime - self.__pause_start_time
@@ -234,7 +236,7 @@ class PriceBuffer(object):
                 self.pause_status = False
                 self.__pause_start_time = None
                 self.__pause_seconds = 0
-                print('{0}: [{1}]买入暂停结束]!'.format(common.get_curr_time_str(), priceitem.coin))
+                print('{0}: [{1}]暂停结束]!'.format(common.get_curr_time_str(), priceitem.coin))
             pass
         return  self.pause_status
         pass
@@ -277,6 +279,8 @@ class PriceBuffer(object):
         priceitem.price_buy_index=buy_index
         # 是否进行买入的预判
         priceitem.price_buy_forecast=self.buyforecast(buy_index)
+        # 检查暂停情况，解除处理中的暂停
+        self.pause_buy_new(priceitem, 0, "")
         # 对于需要买入的价格保存到买入列表
         if priceitem.price_buy_forecast is True:
             self.price_forecast_list.append(priceitem)
@@ -288,6 +292,7 @@ class PriceBuffer(object):
             checkresult = self.buycheck(priceitem)
             if checkresult is True:
                 self.cointrans_handler.coin_trans(self.market, 'buy', priceitem.buy_price, priceitem)
+                self.pause_buy_new(priceitem,300,"买入后暂停")
             # 对最近一次的价格进行校验，判断最后一次的价格的预测买入是不是正确
         self.buyforecast_verify(priceitem)
         # 把最新的价格加入BUFFER列表中

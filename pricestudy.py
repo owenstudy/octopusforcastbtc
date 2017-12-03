@@ -27,7 +27,7 @@ class PriceStudy(object):
     '''读取文件中的价格到price pricebuff'''
     def __read_price_list(self):
         # TODO 默认先读取全部，后面文件增大后需要分批处理
-        pricebuffer = PriceBuffer(save_log_flag=False)
+        pricebuffer = PriceBuffer(market='btc38',save_log_flag=False)
         firstline=True
         for priceline in self.__pricefile.readlines():
             if firstline is True:

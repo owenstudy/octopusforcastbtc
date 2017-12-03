@@ -45,7 +45,7 @@ class Client():
         if len(order2)>=2:
             orderid=order2[1]
         else:
-            print('注意没有返回订单号，使用虚拟号代码，有可能发生错误')
+            print('注意没有返回订单号，使用虚拟号代码，有可能发生错误{0}'.format(order2))
             if orderstatus=='success':
                 #虚拟一个订单号,直接成功的订单，没有 返回定单号则给一个虚拟的订单号
                 orderid = 1111111
@@ -213,9 +213,9 @@ if __name__=='__main__':
 
     price = client.getPrice('ltc_btc')
     depth = client.getMarketDepth('dash','btc')
-    trade_list = client.getMyTradeList('bcc')
+    # trade_list = client.getMyTradeList('bcc')
     # print("My trade list:{0}".format(trade_list))
-    # submit=client.submitOrder('doge_btc','buy',0.00000011,1000)
+    submit=client.submitOrder('doge_btc','buy',0.00000011,1000)
 #     #print(submit.order_id)
 #     #clt = client.getOrderStatus(367892140)
 #     #print(clt)
