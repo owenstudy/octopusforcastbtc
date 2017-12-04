@@ -4,6 +4,7 @@
 import time,traceback
 import btc38.btc38client
 import bterapi.bterclient
+import wex.btcwexclient
 
 '''统一订单的管理到一个文件中'''
 
@@ -16,6 +17,9 @@ class OrderManage:
             self.clientapi=bterapi.bterclient.Client()
         elif market=='btc38':
             self.clientapi=btc38.btc38client.Client()
+        # TODO
+        elif market =='wex':
+            self.clientapi = wex.btcwexclient.Client()
     #提交定单，只需要传入参数就直接执行
     #('doge_cny','sell',0.03,1000)
     def submitOrder(self,pair, trade_type, rate, amount, connection=None, update_delay=None, error_handler=None):
@@ -59,12 +63,12 @@ if __name__=='__main__':
     """
 
 
-    bterorder=OrderManage('bter')
-    order=bterorder.submitOrder('doge_btc','sell',0.01,100)
-    cancelorder=bterorder.cancelOrder(order.order_id,'doge')
-
-    orderstatus=bterorder.getOrderStatus(order.order_id,'doge')
-    print(orderstatus)
+    # bterorder=OrderManage('bter')
+    # order=bterorder.submitOrder('doge_btc','sell',0.01,100)
+    # cancelorder=bterorder.cancelOrder(order.order_id,'doge')
+    #
+    # orderstatus=bterorder.getOrderStatus(order.order_id,'doge')
+    # print(orderstatus)
     """
     bal=bterorder.getMyBalance('doge')
     print('BTER:%f'%bal)
@@ -73,6 +77,12 @@ if __name__=='__main__':
     bal=btc38order.getMyBalance('doge')
     print('BTC38:%f'%bal)
     """
+    btcwex = OrderManage('wex')
+    btc38 = OrderManage('btc38')
 
+    depthwex = btcwex.getMarketDepth('ltc_btc')
+    depthbtc38 = btc38.getMarketDepth('ltc_btc')
+    print(str(depthwex))
+    print(depthbtc38)
 
 
