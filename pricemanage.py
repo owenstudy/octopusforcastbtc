@@ -3,7 +3,7 @@
 
 # @Time    : 17-12-4 下午9:42
 # @Author  : Owen_study
-# @Email   : owen_study@163.com
+# @Email   : owen_study@126.com
 # @File    : pricemanage.py
 # @Software: PyCharm
 # ===============================================
