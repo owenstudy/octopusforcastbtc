@@ -17,7 +17,7 @@ def sms_send(mobile, message):
     resp = requests.post("http://sms-api.luosimao.com/v1/send.json", \
                          auth=("api",apikey),\
                          data={"mobile":mobile, "message":message+"【水果尝尝鲜】"}, timeout=3)
-    result = json.loads(resp.content)
+    result = resp.content
     print(result)
 
 if __name__ == '__main__':
