@@ -13,6 +13,8 @@ import priceupdate,common, config
 import pandas as pd
 
 '''监测价格进行预警通知'''
+# 调用方法, 直接运行方法 run_price_alert()
+# 使用该模块实现对价格的上升或者下降进行预警,以方便操作
 
 class PriceAlert(object):
     def __init__(self, market_list, coin_pair_list):
@@ -31,25 +33,53 @@ class PriceAlert(object):
         # price temporary file
         self.__temp_price_file_name = 'tempprice.txt'
         self.__price_file = open(self.__temp_price_file_name,'a')
-        # self.__price_file.write('market,coin_pair,price_date,buy_price,buy_depth,sell_price,sell_depth\n')
+        # 发送手机号
+        self.__mobile = '13166366407'
 
 
         pass
-    '''是否上升到预定比例'''
-    def match_alert_percent(self, coin_pair):
-        # TODO
-        # chg_percent = self.get_change_percent(coin_pair)
-        chg_info = self.get_change_percent(coin_pair)
-        chg_percent = round(chg_info.get('percent')*100,3)
+    '''生成统一的警告消息内容'''
+    def get_warning_message(self, chg_info):
+        coin_pair = chg_info.get('coin_pair')
+        chg_percent = round(chg_info.get('percent')*100,2)
         begin_price = chg_info.get('begin')
         end_price =chg_info.get('end')
+        begin_depth = round(chg_info.get('depth_begin'),0)
+        end_depth =  round(chg_info.get('depth_end'),0)
+        message = '[{0}]:change percent [{1}%] @{2},[{3}] hour ago,Price[{4}->{5}] Buy Depth[{6}->{7}]'
+        message =message.format(coin_pair, chg_percent, common.get_curr_time_str(), \
+                                self.__alert_duration,begin_price,end_price, begin_depth, end_depth )
+        message = message + config.sms_auth.get('signature')
+        return message
+        pass
 
+    '''短时间剧烈价格变动通知,确保非常时间价格的变更不会造成重大损失'''
+    def fast_chg_warning(self,coin_pair):
+        # 紧急剧烈变动通知,以15分钟为一个周期
+        ori_alert_duration = self.__alert_duration
+        self.__alert_duration = 0.25
+        fast_chg_info = self.get_change_percent(coin_pair)
+        # 复原默认的周期
+        fast_chg_percent = round(fast_chg_info.get('percent'), 3)
+        # 15分钟内变动超过10的需要警告
+        if fast_chg_percent>=0.1 or fast_chg_percent<=-0.1:
+            warning_message = self.get_warning_message(fast_chg_info)
+            sms.sms_send(self.__mobile, warning_message)
+            # print(warning_message)
+        self.__alert_duration = ori_alert_duration
+        pass
+    '''是否上升到预定比例'''
+    def match_alert_percent(self, coin_pair):
+        # chg_percent = self.get_change_percent(coin_pair)
+        chg_info = self.get_change_percent(coin_pair)
+        chg_percent = round(chg_info.get('percent'),3)
+        # 检查快速异常的变动
+        self.fast_chg_warning(coin_pair)
+        # 预定时间内变化超过预期的处理
         if chg_percent>self.__alert_percent_up or chg_percent<self.__alert_percent_down:
             if self.__last_send_time is None:
-                message = '[{0}]:[{3}->{4}] change percent [{1}%] @{2}, against[{5}] hour ago'.format(coin_pair, chg_percent, common.get_curr_time_str(),begin_price,end_price, self.__alert_duration )
-                message = message + config.sms_auth.get('signature')
-                print(message)
-                sms.sms_send('13166366407', message)
+                message = self.get_warning_message(chg_info)
+                sms.sms_send(self.__mobile, message)
                 self.__last_send_time = datetime.datetime.now()
             else:
                 # 超过发送的时间间隔则清空时间，捕获下次发送时间
@@ -70,16 +100,25 @@ class PriceAlert(object):
         cnt = process_price['buy_price'].count()-1
 
         if cnt >=0:
+            # 价格信息
             last_price = process_price.iloc[cnt]['buy_price']
             first_price = process_price['buy_price'].iloc[0]
+            # 价格深度
+            depth_last = process_price.iloc[cnt]['buy_depth']
+            depth_first = process_price['buy_depth'].iloc[0]
         else:
             # 没有记录时默认为1
             first_price = 1
             last_price =first_price
+            depth_last =1
+            depth_first =1
         change_percent = (last_price -first_price)/first_price
+        depth_chg_percent = round((depth_last - depth_first)/depth_first,3)
         # 当前价格和指定时间 段之前的差异百分比
         change_percent = round(change_percent, 3)
-        change_info = {"begin":first_price, "end":last_price, "percent":change_percent}
+        change_info = {"coin_pair":coin_pair, "begin":first_price, "end":last_price, "percent":change_percent,\
+                       "depth_begin":depth_first, "depth_end":depth_last, "depth_percent":depth_chg_percent\
+                       }
         return change_info
         pass
     '''取价格信息'''
@@ -150,8 +189,10 @@ def run_price_alert():
 
 
 if __name__ == '__main__':
+
     run_price_alert()
-    # pricealert = PriceAlert(['btc38'],['ltc_btc'])
+    pricealert = PriceAlert(['btc38'],['ltc_btc'])
+    pricealert.fast_chg_warning('ltc_btc')
     #
     # pricealert.loop_new_price()
 

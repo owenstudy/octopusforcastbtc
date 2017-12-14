@@ -18,6 +18,7 @@ def sms_send(mobile, message):
                          auth=("api",apikey),\
                          data={"mobile":mobile, "message":message+"【水果尝尝鲜】"}, timeout=3)
     result = resp.content
+    print(message)
     print(result)
 
 if __name__ == '__main__':
