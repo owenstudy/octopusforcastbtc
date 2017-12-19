@@ -9,7 +9,7 @@
 # ===============================================
 
 import sms, ordermanage, json, time, datetime
-import priceupdate,common, config
+import priceupdate,common, config, cointrans
 import pandas as pd
 
 '''监测价格进行预警通知'''
@@ -35,7 +35,12 @@ class PriceAlert(object):
         self.__price_file = open(self.__temp_price_file_name,'a')
         # 发送手机号
         self.__mobile = '13166366407'
-
+        # 保单warning message信息
+        self.__warning_message_file = open('warning_message.txt','a')
+        # 处理交易类初始化
+        self.cointrans_handler = None
+        # 快速下降的买入标志
+        self.__fast_price_down_buy_std = -0.12
 
         pass
     '''生成统一的警告消息内容'''
@@ -61,31 +66,52 @@ class PriceAlert(object):
         fast_chg_info = self.get_change_percent(coin_pair)
         # 复原默认的周期
         fast_chg_percent = round(fast_chg_info.get('percent'), 3)
-        # 15分钟内变动超过10的需要警告
-        if fast_chg_percent>=0.1 or fast_chg_percent<=-0.1:
-            warning_message = self.get_warning_message(fast_chg_info)
-            sms.sms_send(self.__mobile, warning_message)
+        result = False
+        # 15分钟内变动超过指定比例的需要警告
+        if fast_chg_percent>=0.05 or fast_chg_percent <= self.__fast_price_down_buy_std:
+            if self.__last_send_time is None:
+                warning_message = self.get_warning_message(fast_chg_info)
+                self.__warning_message_file.write(warning_message)
+                self.__warning_message_file.flush()
+                self.__last_send_time = datetime.datetime.now()
+                # 达到买入标志后返回买入标志为TRUE
+                sms.sms_send(self.__mobile, warning_message)
+                result = True
+            else:
+                # 超过发送的时间间隔则清空时间，捕获下次发送时间
+                if datetime.datetime.now() - self.__last_send_time > datetime.timedelta(seconds=self.__send_duration/2*3600):
+                    self.__last_send_time = None
             # print(warning_message)
         self.__alert_duration = ori_alert_duration
+        return result
         pass
     '''是否上升到预定比例'''
+    # 返回是否可以买入的标志
     def match_alert_percent(self, coin_pair):
         # chg_percent = self.get_change_percent(coin_pair)
         chg_info = self.get_change_percent(coin_pair)
         chg_percent = round(chg_info.get('percent'),3)
         # 检查快速异常的变动
-        self.fast_chg_warning(coin_pair)
+        result = self.fast_chg_warning(coin_pair)
         # 预定时间内变化超过预期的处理
-        if chg_percent>self.__alert_percent_up or chg_percent<self.__alert_percent_down:
+        if chg_percent>self.__alert_percent_up or chg_percent < self.__alert_percent_down:
             if self.__last_send_time is None:
                 message = self.get_warning_message(chg_info)
-                sms.sms_send(self.__mobile, message)
                 self.__last_send_time = datetime.datetime.now()
+                self.__warning_message_file.write(message)
+                self.__warning_message_file.flush()
+                # 长时间波动o为剧烈波动行情的70%时下降时买入
+                if chg_percent <= self.__fast_price_down_buy_std*.6:
+                    sms.sms_send(self.__mobile, message)
+                    result = True
+                else:
+                    result = False
             else:
                 # 超过发送的时间间隔则清空时间，捕获下次发送时间
                 if datetime.datetime.now() - self.__last_send_time > datetime.timedelta(seconds=self.__send_duration*3600):
                     self.__last_send_time = None
 
+        return result
         pass
     '''当前的上升或者下降比例'''
     def get_change_percent(self, coin_pair):
@@ -171,15 +197,79 @@ class PriceAlert(object):
 
         while(True):
             self.one_round_price()
-            df1= pd.read_csv(self.__temp_price_file_name)
-            # print(df1.describe())
             time.sleep(2)
             run_times = run_times +1
             # 每运行10次检查一下是不是需要发通知
             if run_times%10 == 0:
-                for coin_pair in self.__coin_pair_list:
-                    self.match_alert_percent(coin_pair)
-    '''分析价格趋势'''
+                for market in self.__market_list:
+                    for coin_pair in self.__coin_pair_list:
+                        try:
+                            buy_flag = self.match_alert_percent(coin_pair)
+                            # 达到警示价格的进行持续买入操作
+                            if buy_flag is True:
+                                self.coin_trans(market,coin_pair)
+                            # 检查成交状态及进行止损检查
+                            self.update_order_status(market, coin_pair)
+                        except Exception as e:
+                            print('Call failed:{0}'.format(str(e)))
+    '''从市场取得价格，返回一个价格明细'''
+    def getpriceitem(self,market,coin_pair):
+        try:
+            order_market=ordermanage.OrderManage(market)
+            price_depth=order_market.getMarketDepth(coin_pair)
+            buy_depth=0
+            sell_depth=0
+            priceitem=None
+            coin=coin_pair.split('_')[0]
+            # use the sell price as buy_price
+            buy_price=price_depth.sell[0][0]
+            # use the buy orderprice as sell price
+            sell_price=price_depth.buy[0][0]
+            # 尝试列表中所有的买入和
+            for buy_item in price_depth.buy:
+                buy_depth=buy_depth+buy_item[1]
+            for sell_item in price_depth.sell:
+                sell_depth=sell_depth+sell_item[1]
+            buy_depth=round(buy_depth,2)
+            sell_depth=round(sell_depth,2)
+            # 把价格日期保存成字符串
+            priceitem=priceupdate.PriceItem(common.get_curr_time_str(),coin,buy_price,buy_depth,sell_price,sell_depth)
+        except Exception as e:
+            print('取得[{1}]价格列表时错误：{0}'.format(str(e), coin_pair))
+        return priceitem
+    '''买入操作'''
+    def coin_trans(self, market, coin_pair):
+        priceitem = self.getpriceitem(market,coin_pair)
+        # 对交易进行初始化处理
+        if self.cointrans_handler is None:
+            self.cointrans_handler = cointrans.CoinTrans(market)
+        elif self.cointrans_handler.market !=market:
+            self.cointrans_handler = cointrans.CoinTrans(market)
+
+        # 买入操作
+        self.cointrans_handler.coin_trans(market, 'buy', priceitem.buy_price, priceitem)
+        # 对买入的订单进行加价卖出
+        self.cointrans_handler.sell_check()
+        # 更新订单状态状态
+        self.cointrans_handler.update_order_status()
+        # 止损操作
+        self.cointrans_handler.stop_lost(priceitem)
+        pass
+    '''更新状态'''
+    def update_order_status(self, market, coin_pair):
+        priceitem = self.getpriceitem(market,coin_pair)
+        # 对交易进行初始化处理
+        if self.cointrans_handler is None:
+            self.cointrans_handler = cointrans.CoinTrans(market)
+        elif self.cointrans_handler.market !=market:
+            self.cointrans_handler = cointrans.CoinTrans(market)
+        # 更新订单状态状态
+        self.cointrans_handler.update_order_status()
+        # 止损操作
+        self.cointrans_handler.stop_lost(priceitem)
+
+        pass
+'''分析价格趋势'''
 def run_price_alert():
     coin_pair_list = config.price_monitor_coin_list.get('coinlist').split(',')
     market_list = ['btc38']

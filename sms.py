@@ -13,13 +13,17 @@ import config
 
 '''发送SMS信息'''
 def sms_send(mobile, message):
-    apikey = config.sms_auth.get("apikey")
-    resp = requests.post("http://sms-api.luosimao.com/v1/send.json", \
-                         auth=("api",apikey),\
-                         data={"mobile":mobile, "message":message+"【水果尝尝鲜】"}, timeout=3)
-    result = resp.content
-    print(message)
-    print(result)
+    try:
+        apikey = config.sms_auth.get("apikey")
+        resp = requests.post("http://sms-api.luosimao.com/v1/send.json", \
+                             auth=("api",apikey),\
+                             data={"mobile":mobile, "message":message+"【水果尝尝鲜】"}, timeout=3)
+        result = resp.content
+        print(message)
+        print(result)
+    except Exception as e:
+        print('sms send error:{0}'.format(str(e)))
+
 
 if __name__ == '__main__':
     sms_send(13166366407, "coin up great, 15%")
