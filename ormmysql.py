@@ -8,7 +8,7 @@ from sqlalchemy.orm import mapper, sessionmaker
 from sqlalchemy import create_engine, Table, Column, Integer, String, MetaData
 from sqlalchemy.sql.expression import Cast
 from sqlalchemy.ext.compiler import compiles
-from sqlalchemy import or_
+from sqlalchemy import or_, func
 from sqlalchemy.dialects.mysql import \
     BIGINT, BINARY, BIT, BLOB, BOOLEAN, CHAR, DATE, \
     DATETIME, DECIMAL, DECIMAL, DOUBLE, ENUM, FLOAT, INTEGER, \
@@ -101,7 +101,43 @@ OrderTransList = Table(
     Column('trans_time', VARCHAR(100),)
 )
 
-# 创建数据库连接,MySQLdb连接方式
+# 定投相关的表,总表
+RegularInvestSummary = Table(
+    "t_regular_invest_summary", metadata,
+    Column('account_id', INTEGER, primary_key=True),
+    Column('coin_pair', VARCHAR(100)),
+    Column('unit_balance', FLOAT),
+    Column('unit_amount', FLOAT),
+    Column('esti_unit_amount', FLOAT),
+    Column('esti_profit_rate', FLOAT)
+)
+# 定投相关的表,明细
+RegularInvestDetail = Table(
+    "t_regular_invest_dtl", metadata,
+    Column('trans_id', INTEGER, primary_key=True),
+    Column('account_id', INTEGER),
+    Column('trans_order_id', INTEGER),
+    Column('trans_type', VARCHAR(4)),
+    Column('coin_pair', VARCHAR(100)),
+    Column('trans_price', FLOAT),
+    Column('trans_units', FLOAT),
+    Column('trans_amount', FLOAT),
+    Column('trans_date', VARCHAR(100))
+)# 定投相关的表,明细日志
+RegularInvestDetailLog = Table(
+    "t_regular_invest_dtl_log", metadata,
+    Column('trans_id', INTEGER, primary_key=True),
+    Column('account_id', INTEGER),
+    Column('trans_order_id', INTEGER),
+    Column('trans_type', VARCHAR(4)),
+    Column('coin_pair', VARCHAR(100)),
+    Column('trans_price', FLOAT),
+    Column('trans_units', FLOAT),
+    Column('trans_amount', FLOAT),
+    Column('trans_date', VARCHAR(100))
+)
+
+    # 创建数据库连接,MySQLdb连接方式
 # My laptop PC DB
 # mysql_db = create_engine('mysql+pymysql://coin:Windows2000@127.0.0.1:3306/coins', echo = False)
 # My home PC db
@@ -126,6 +162,17 @@ class MapperAllOpenView(object):
 class MapperOrderTransList(object):
     pass
 
+# 定投的总表
+class MapperRegularInvestSummary(object):
+    pass
+# 定投的明细
+class MapperRegularInvestDetail(object):
+    pass
+# 定投的明细log
+class MapperRegularInvestDetailLog(object):
+    pass
+
+
 
 # 把表映射到类
 mapper(MapperOrder, OrderItemTable)
@@ -135,6 +182,12 @@ mapper(MapperOrderLog, OrderItemTableLog)
 mapper(MapperAllOpenView, OpenOrderView)
 # 所有aex网站中的交易历史
 mapper(MapperOrderTransList, OrderTransList)
+# 定投的总表
+mapper(MapperRegularInvestSummary, RegularInvestSummary)
+# 定投的明细
+mapper(MapperRegularInvestDetail, RegularInvestDetail)
+# 定投的明细log
+mapper(MapperRegularInvestDetailLog, RegularInvestDetailLog)
 
 
 # 创建了一个自定义了的 Session类
@@ -335,14 +388,141 @@ def saveaextrans(transitem):
         session.flush()
         session.commit()
     pass
+# 生成定投的交易帐户
+def save_regular_account(coin_pair):
+    # TODO
+    # 判断是不是存在帐户,如果不存在则新增加,否则就不创建
+    exist_account = get_regular_invest_summary(coin_pair)
+    if exist_account is None:
+        newaccount = MapperRegularInvestSummary()
+        newaccount.coin_pair = coin_pair
+        # 默认的帐户余额为0
+        newaccount.unit_balance = 0
+        newaccount.unit_amount = 0
+        session.add(newaccount)
+        session.flush()
+        session.commit()
+        # 保存成功后再查询返回
+        exist_account = get_regular_invest_summary(coin_pair)
+    return exist_account
+    pass
+
+# 保存定期投资的交易记录
+def save_regular_invest(orderitem=None):
+    # TODO
+    # 先默认为btc帐户,以后再扩展支持到cny, usd等
+    coin_pair = orderitem.coin+'_btc'
+    regular_account = save_regular_account(coin_pair)
+    # 帐户存在或者创建成功后才执行后续的交易保存操作
+    if regular_account is not None:
+        newtrans = MapperRegularInvestDetail()
+        newtrans.account_id = regular_account.get('account_id')
+        newtrans.coin_pair = coin_pair
+        # 根据交易的字段判断是买入或者是卖出
+        if orderitem.sell_price is not None:
+            newtrans.trans_type = 'sell'
+            # 卖出交易的明细信息
+            newtrans.trans_order_id = orderitem.sell_order_id
+            newtrans.trans_price = orderitem.sell_price
+            newtrans.trans_units = orderitem.sell_units*-1
+            newtrans.trans_amount = orderitem.sell_amount*-1
+            newtrans.trans_date = orderitem.sell_date
+            trans_units = orderitem.sell_units*-1
+            # 卖出保存为负数
+            trans_amount = orderitem.sell_amount*-1
+        else:
+            newtrans.trans_type = 'buy'
+            # 卖出交易的明细信息
+            newtrans.trans_order_id = orderitem.buy_order_id
+            newtrans.trans_price = orderitem.buy_price
+            newtrans.trans_units = orderitem.buy_units
+            newtrans.trans_amount = orderitem.buy_amount
+            newtrans.trans_date = orderitem.buy_date
+            trans_units = orderitem.buy_units
+            # 卖出保存为负数
+            trans_amount = orderitem.buy_amount
+            pass
+        session.add(newtrans)
+        # 把本次交易的金额汇总到总表中
+        query = session.query(MapperRegularInvestSummary)
+        accountinfo=query.filter_by(coin_pair=coin_pair).first()
+        accountinfo.unit_balance = accountinfo.unit_balance+trans_units
+        accountinfo.unit_amount = accountinfo.unit_amount+trans_amount
+        # 评估金额更新
+        accountinfo.esti_unit_amount = accountinfo.unit_balance*newtrans.trans_price
+        accountinfo.esti_profit_rate = round(accountinfo.esti_unit_amount/accountinfo.unit_amount - 1,3)
+        session.commit()
+        # 把所有的买入记录清空,保存到log表中
+        # TODO
+# 更新当前已购买的估值
+def update_invest_estivalue(coin_pair, priceitem):
+    query = session.query(MapperRegularInvestSummary)
+    accountinfo = query.filter_by(coin_pair=coin_pair).first()
+    # 评估金额更新
+    accountinfo.esti_unit_amount = accountinfo.unit_balance * priceitem.sell_price
+    accountinfo.esti_profit_rate = round(accountinfo.esti_unit_amount / accountinfo.unit_amount - 1, 3)
+    session.commit()
+
+    pass
+# 把现表的数据保存到LOG表中
+def save_invest_log(coin_pair):
+    accountinfo = get_regular_invest_summary(coin_pair)
+    pass
+# 获取最近的交易日期
+def get_last_invest_date(coin_pair):
+    accountinfo = get_regular_invest_summary(coin_pair)
+    # 帐户不存在,则返回值为空
+    if accountinfo is None:
+        result = {'last_trans_date': None}
+        return result
+
+    query = session.query(func.max(MapperRegularInvestDetail.trans_date))
+    result = None
+    # 查询所有的买入记录,找到最近一次交易的记录
+    last_trans = query.filter(MapperRegularInvestDetail.account_id==accountinfo.get('account_id')).all()
+    for trans in last_trans:
+        result = {'last_trans_date': trans[0]}
+    return result
+    pass
+# 获取定期投资的相关信息,传入指定的COIN对
+def get_regular_invest_summary(coin_pair):
+    # TODO
+    query = session.query(MapperRegularInvestSummary)
+    # coin_pair一个COIN只有 一个帐户
+    accountinfo = query.filter_by(coin_pair=coin_pair)
+    result = None
+    for account in accountinfo:
+        result = {'account_id':account.account_id, 'unit_balance':account.unit_balance, 'unit_amount':account.unit_amount}
+    # print(result)
+    return result
+    pass
+
 def ormtest():
 
+    # save_regular_account('ltc_btc')
+    # get_last_invest_record('ltc_btc')
+    # account = get_regular_invest_summary('ltc_btc')
+    # orderitem = cointrans.OrderItem('btc38','ltc')
+    # orderitem.buy_price=0.01111
+    # orderitem.buy_amount=0.001
+    # orderitem.buy_units = 1
+    # orderitem.buy_date = common.get_curr_time_str()
+    # orderitem.buy_order_id=1001
+    # save_regular_invest(orderitem)
+    # orderitem_sell = cointrans.OrderItem('btc38','ltc')
+    # orderitem_sell.sell_price=0.015
+    # orderitem_sell.sell_amount=0.001
+    # orderitem_sell.sell_units = 2
+    # orderitem_sell.sell_date = common.get_curr_time_str()
+    # orderitem_sell.sell_order_id=1002
+    # save_regular_invest(orderitem_sell)
+
     # test save aex trans list
-    client = btc38.btc38client.Client()
-    trade_list = client.getMyTradeList('bcc_btc')
-    for transitem  in trade_list:
-        aextransitem = cointrans.AEXTransItem(transitem)
-        saveaextrans(aextransitem)
+    # client = btc38.btc38client.Client()
+    # trade_list = client.getMyTradeList('bcc_btc')
+    # for transitem  in trade_list:
+    #     aextransitem = cointrans.AEXTransItem(transitem)
+    #     saveaextrans(aextransitem)
 
     # test save order
     # orderitem = cointrans.OrderItem('btc38','ltc')
@@ -354,8 +534,9 @@ def ormtest():
     # orderitem.buy_units = 18
     # orderitem.buy_date = common.get_curr_time_str()
     #
-    # pricebuffer = priceupdate.PriceBuffer('btc38', save_log_flag=False)
-    # priceitem = pricebuffer.getpriceitem('btc38', 'doge_cny')
+    pricebuffer = priceupdate.PriceBuffer('btc38', save_log_flag=False)
+    priceitem = pricebuffer.getpriceitem('btc38', 'ltc_btc')
+    update_invest_estivalue('ltc_btc',priceitem)
     # #
     # orderitem.priceitem = priceitem
     #

@@ -41,7 +41,6 @@ class PriceAlert(object):
         self.cointrans_handler = None
         # 快速下降的买入标志
         self.__fast_price_down_buy_std = -0.12
-
         pass
     '''生成统一的警告消息内容'''
     def get_warning_message(self, chg_info):
@@ -267,6 +266,13 @@ class PriceAlert(object):
         self.cointrans_handler.update_order_status()
         # 止损操作
         self.cointrans_handler.stop_lost(priceitem)
+    '''是否满足定期投资的条件'''
+    def regular_invest_indi(self, coin_pair):
+        # TODO
+        return 'Y'
+        pass
+    '''周期性定制方法'''
+    def regular_invest(self):
 
         pass
 '''分析价格趋势'''

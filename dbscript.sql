@@ -65,6 +65,35 @@ create user coin identified by 'Windows2000';
     drop view v_aex_profit_summary;
     create view v_aex_profit_summary as
     select coin,sum(btcvolume) profit_amount from v_aex_profit_details group by coin;
+    # 保存regular 投资的投资记录
+    drop table t_regular_invest_summary;
+    create table t_regular_invest_summary(
+        account_id INT(11) NOT NULL AUTO_INCREMENT,
+        coin_pair  VARCHAR(100),
+        unit_balance FLOAT(18,10),  # 总的买入UNIT
+        unit_amount  FLOAT(18,10),   # 总的投资金额
+        esti_unit_amount FLOAT(18,10),   # 当前的估值
+        esti_profit_rate FLOAT(5,3),   # 估算的盈利比例
+        PRIMARY KEY (account_id)
+        );
+    # 定期投资的明细表
+    drop table t_regular_invest_dtl;
+    create table t_regular_invest_dtl(
+        trans_id INT(11) NOT NULL AUTO_INCREMENT,
+        account_id INT(11),
+        # buy/sell
+        trans_type VARCHAR(4),
+        coin_pair  VARCHAR(100),
+        trans_order_id INT(11),
+        trans_price FLOAT(18,10),
+        trans_units FLOAT(18,10),
+        trans_amount FLOAT(18,10),
+        trans_date VARCHAR(100),
+        PRIMARY KEY (trans_id)
+    );
+    drop table t_regular_invest_dtl_log;
+    create table t_regular_invest_dtl_log as select * from t_regular_invest_dtl where 1=2;
+
 
     drop view v_profit_all;
     create view v_profit_all as    select * from (
