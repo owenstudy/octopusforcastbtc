@@ -170,6 +170,8 @@ def get_rounding_setting(market):
 # # 注意BCC的价格必须为0，否则会报错，BTC38的约定规则有问题
 rounding_price_setting =\
 {'hlb': {'unit': 6, 'price': 8}, 'etc': {'unit': 7, 'price': 5}, 'ncs': {'unit': 7, 'price': 8}, 'xzc': {'unit': 6, 'price': 5}, 'ric': {'unit': 6, 'price': 8}, 'xcn': {'unit': 6, 'price': 8}, 'bcc': {'unit': 6, 'price': 4}, 'xem': {'unit': 8, 'price': 7}, 'eth': {'unit': 6, 'price': 4}, 'bcx': {'unit': 7, 'price': 8}, 'xrp': {'unit': 6, 'price': 7}, 'zcc': {'unit': 6, 'price': 8}, 'vash': {'unit': 6, 'price': 8}, 'inf': {'unit': 6, 'price': 8}, 'doge': {'unit': 5, 'price': 8}, 'blk': {'unit': 6, 'price': 7}, 'sys': {'unit': 6, 'price': 7}, 'ltc': {'unit': 6, 'price': 5}, 'bts': {'unit': 7, 'price': 7}, 'bcd': {'unit': 8, 'price': 5}, 'nxt': {'unit': 6, 'price': 7}, 'tmc': {'unit': 8, 'price': 6}, 'qrk': {'unit': 6, 'price': 8}, 'mgc': {'unit': 6, 'price': 8}, 'eac': {'unit': 5, 'price': 0}, 'mec': {'unit': 6, 'price': 8}, 'tag': {'unit': 6, 'price': 8}, 'wdc': {'unit': 6, 'price': 8}, 'sbtc': {'unit': 8, 'price': 4}, 'xpm': {'unit': 6, 'price': 8}, 'dash': {'unit': 6, 'price': 4}, 'xlm': {'unit': 7, 'price': 7}, 'ardr': {'unit': 4, 'price': 6}}
+# btc价格额外的rounding规则
+rounding_price_setting['btc']={'unit':6, 'price':0}
 # 价格rounding规则
 def rounding_price(coin):
     rounding_data = rounding_price_setting.get(coin)

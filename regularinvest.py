@@ -87,12 +87,21 @@ class RegularInvest(object):
         pricealert_forecast = pricealert.PriceAlert(self.__market, self.__coin_list)
         # 当前的价格信息
         currpriceitem = pricealert_forecast.getpriceitem(self.__market, coin_pair)
-
+        total_unit_balance = regular_summary.get('unit_balance')
         total_invest_amount = regular_summary.get('unit_amount')
         actual_amount = regular_summary.get('unit_balance')*currpriceitem.sell_price
         # 达到止盈的比例则执行卖出
         if actual_amount/total_invest_amount - 1 >= self.__sell_profit_rate:
             self.coin_trans(self.__market, const.TRANS_TYPE_SELL, currpriceitem.sell_price, currpriceitem)
+        # 止损检查
+        elif actual_amount/total_invest_amount - 1 <= self.__stop_lost_rate*-1:
+            # 临时把每次的交易金额设置为卖出的总金额
+            # origi_trans_amount_per_trans = self.__trans_amount_per_trans
+            # self.__trans_amount_per_trans = actual_amount
+            # 把所有的买入都卖出
+            self.coin_trans(self.__market, const.TRANS_TYPE_SELL, currpriceitem.sell_price, currpriceitem)
+            # 恢复买入的默认买入金额
+            # self.__trans_amount_per_trans = origi_trans_amount_per_trans
             pass
         # 更新帐户的估值信息
         if currpriceitem is not None:
@@ -103,15 +112,15 @@ class RegularInvest(object):
     def run_regular_invest(self):
         while(True):
             for coin_pair in self.__coin_list:
-                # 循环进行卖出和买入检查
-                self.regular_buy(coin_pair)
-                self.sell_check(coin_pair)
-                # 每10秒执行一次检查操作
-                time.sleep(10)
-                pass
-        pass
-    '''止损检查'''
-    def stop_lost_check(self, coin_pair):
+                try:
+                    # 循环进行卖出和买入检查
+                    self.regular_buy(coin_pair)
+                    self.sell_check(coin_pair)
+                    # 每10秒执行一次检查操作
+                    time.sleep(10)
+                    pass
+                except Exception as e:
+                    print('处理:{0}时发生错误:{1}'.format(coin_pair,str(e)))
         pass
     # 判断是不是满足买入或者卖出条件
     def check_trans_indi(self, coin_pair):
@@ -120,7 +129,11 @@ class RegularInvest(object):
             return True
         # 已经买入的最大上限则停止买入
         total_unit_amount = regular_summary.get('unit_amount')
-        if total_unit_amount >= self.__buy_max_amt:
+        mk_type = coin_pair.split('_')[1]
+        # 不同币种有不同的最大值
+        buy_max_amt = self.__regular_param.get('buy_max_amt').get(mk_type)
+
+        if total_unit_amount >= buy_max_amt:
             return False
         return True
         pass
@@ -132,7 +145,8 @@ class RegularInvest(object):
     '''
     def coin_trans(self, market, trans_type, trans_price, price_item):
         coin = price_item.coin
-        coin_pair = coin+'_btc'
+        coin_pair = price_item.coin_pair
+        # coin_pair = coin+'_btc'
 
         # 判断是不是满足交易的条件，不满足则退出不进行交易
         if trans_type == const.TRANS_TYPE_BUY:
@@ -146,7 +160,10 @@ class RegularInvest(object):
         # 买入时的价格
         buy_price = price_item.buy_price
         # 交易UNITS
-        trans_units = round(self.__trans_amount_per_trans / buy_price, rounding_unit)
+        mk_type = coin_pair.split('_')[1]
+        # 不同的基础货币有不同的买入金额
+        trans_amount_per_trans = self.__regular_param.get('buy_amt').get(mk_type)
+        trans_units = round(trans_amount_per_trans / buy_price, rounding_unit)
         # 第一次交易卖出时的UNIT和买入UNIT会有一个0.5%的误差
         newtrans_units = trans_units
         # 对交易价格进行ROUNDING处理
@@ -156,7 +173,7 @@ class RegularInvest(object):
             return False
         # 当前交易的对象
         if trans_type == const.TRANS_TYPE_BUY:
-            orderitem = cointrans.OrderItem(market, coin)
+            orderitem = cointrans.OrderItem(market, coin_pair)
         elif trans_type == const.TRANS_TYPE_SELL:
             # 取得当前可以卖出的总units
             account_summary = ormmysql.get_regular_invest_summary(coin_pair)
@@ -201,7 +218,7 @@ class RegularInvest(object):
             orderitem.buy_order_id = order_id
             orderitem.buy_status = order_status
             orderitem.buy_price = trans_price_rounding
-            orderitem.buy_amount = self.__trans_amount_per_trans
+            orderitem.buy_amount = trans_amount_per_trans
             orderitem.buy_units = trans_units
             orderitem.buy_date = common.get_curr_time_str()
             orderitem.priceitem = price_item
@@ -224,7 +241,7 @@ class RegularInvest(object):
                                                                price_item.pricedate, price_item.coin,
                                                                price_item.buy_price, orderitem.sell_price, publicparameters.SELL_PROFIT_RATE))
             # 成功卖出后把所有的买入记录清空,保存在LOG表
-            # TODO
+            # 不需要保存到LOG,明细一直保留所有的记录
 
             # 更新到DB
             # ormmysql.updateorder(orderitem)

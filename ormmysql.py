@@ -411,7 +411,7 @@ def save_regular_account(coin_pair):
 def save_regular_invest(orderitem=None):
     # TODO
     # 先默认为btc帐户,以后再扩展支持到cny, usd等
-    coin_pair = orderitem.coin+'_btc'
+    coin_pair = orderitem.coin_pair
     regular_account = save_regular_account(coin_pair)
     # 帐户存在或者创建成功后才执行后续的交易保存操作
     if regular_account is not None:

@@ -19,7 +19,13 @@ class OrderItem(object):
         # market
         self.market = market
         # coin
-        self.coin = coin
+        # 可以传入mk_type,默认为btc
+        if len(coin.split('_')) == 2:
+            self.coin_pair = coin
+            self.coin = coin.split('_')[0]
+        else:
+            self.coin_pair=coin+'_btc'
+            self.coin = coin
         # 买入价格
         self.buy_price = None
         # 买入金额，默认为10RMB

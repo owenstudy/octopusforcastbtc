@@ -168,7 +168,7 @@ class PriceAlert(object):
             buy_depth = round(buy_depth, 2)
             sell_depth = round(sell_depth, 2)
             # 把价格日期保存成字符串
-            priceitem = priceupdate.PriceItem(common.get_curr_time_str(), coin, buy_price, buy_depth, sell_price,
+            priceitem = priceupdate.PriceItem(common.get_curr_time_str(), coin_pair, buy_price, buy_depth, sell_price,
                                               sell_depth)
             # result = {"market":market, "coin_pair": coin_pair}
             result ='{0},{1},{2},{3},{4},{5},{6}\n'.format(market,coin_pair,common.get_curr_time_str(),buy_price,buy_depth,sell_price,sell_depth)
@@ -232,7 +232,7 @@ class PriceAlert(object):
             buy_depth=round(buy_depth,2)
             sell_depth=round(sell_depth,2)
             # 把价格日期保存成字符串
-            priceitem=priceupdate.PriceItem(common.get_curr_time_str(),coin,buy_price,buy_depth,sell_price,sell_depth)
+            priceitem=priceupdate.PriceItem(common.get_curr_time_str(),coin_pair,buy_price,buy_depth,sell_price,sell_depth)
         except Exception as e:
             print('取得[{1}]价格列表时错误：{0}'.format(str(e), coin_pair))
         return priceitem

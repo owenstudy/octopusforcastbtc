@@ -13,7 +13,14 @@ from dailysummary import DailySummary
 class PriceItem(object):
     def __init__(self,pricedate, coin,buy_price, buy_depth, sell_price, sell_depth):
         self.pricedate=pricedate
-        self.coin=coin
+        # 更新传送的价格包括基础货币,默认为btc
+        # 增加一个新的参数来保存基础化身以支持更多的交易操作
+        if len(coin.split('_')) == 2:
+            self.coin_pair = coin
+            self.coin = coin.split('_')[0]
+        else:
+            self.coin_pair = coin+'_btc'
+            self.coin = coin
         self.buy_price=buy_price
         self.buy_depth=buy_depth
         self.sell_price=sell_price
