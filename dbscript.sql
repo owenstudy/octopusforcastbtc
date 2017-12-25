@@ -1,12 +1,12 @@
 
 
 # create database
-create database coins;
+create database coins1;
 
 #create user name to access coins
 create user coin identified by 'Windows2000';
 #grant privileges to coin
-    GRANT ALL PRIVILEGES ON coins.* TO 'coin' IDENTIFIED BY 'Windows2000';
+    GRANT ALL PRIVILEGES ON coins1.* TO 'coin' IDENTIFIED BY 'Windows2000';
 
     #change to coins database
     use coins;
@@ -70,10 +70,13 @@ create user coin identified by 'Windows2000';
     create table t_regular_invest_summary(
         account_id INT(11) NOT NULL AUTO_INCREMENT,
         coin_pair  VARCHAR(100),
-        unit_balance FLOAT(18,10),  # 总的买入UNIT
-        unit_amount  FLOAT(18,10),   # 总的投资金额
+        unit_balance FLOAT(18,10),  # 总的买入UNIT,当前未卖出成交的UNITS
+        unit_amount  FLOAT(18,10),   # 总的投资金额,当前未卖出成交的amount
         esti_unit_amount FLOAT(18,10),   # 当前的估值
         esti_profit_rate FLOAT(5,3),   # 估算的盈利比例
+        total_units  FLOAT(18,10),  # 总的发生交易的UNITS
+        total_amount  FLOAT(18,10),  # 总的发生交易的amount
+        total_profit  FLOAT(18,10),  # 总的盈利金额
         PRIMARY KEY (account_id)
         );
     # 定期投资的明细表

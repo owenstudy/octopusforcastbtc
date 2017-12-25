@@ -109,7 +109,10 @@ RegularInvestSummary = Table(
     Column('unit_balance', FLOAT),
     Column('unit_amount', FLOAT),
     Column('esti_unit_amount', FLOAT),
-    Column('esti_profit_rate', FLOAT)
+    Column('esti_profit_rate', FLOAT),
+    Column('total_units', FLOAT),
+    Column('total_amount', FLOAT),
+    Column('total_profit', FLOAT)
 )
 # 定投相关的表,明细
 RegularInvestDetail = Table(
@@ -399,6 +402,10 @@ def save_regular_account(coin_pair):
         # 默认的帐户余额为0
         newaccount.unit_balance = 0
         newaccount.unit_amount = 0
+        newaccount.total_units = 0
+        newaccount.total_amount = 0
+        newaccount.total_profit = 0
+
         session.add(newaccount)
         session.flush()
         session.commit()
@@ -445,9 +452,20 @@ def save_regular_invest(orderitem=None):
         session.add(newtrans)
         # 把本次交易的金额汇总到总表中
         query = session.query(MapperRegularInvestSummary)
-        accountinfo=query.filter_by(coin_pair=coin_pair).first()
+        accountinfo = query.filter_by(coin_pair=coin_pair).first()
         accountinfo.unit_balance = accountinfo.unit_balance+trans_units
         accountinfo.unit_amount = accountinfo.unit_amount+trans_amount
+        # 累积的金额更新
+        if newtrans.trans_type == 'buy':
+            accountinfo.total_units = accountinfo.total_units + trans_units
+            accountinfo.total_amount = accountinfo.total_amount + trans_amount
+        else:
+            # 卖出后对当前的金额进行清空操作,都设置为0,重新开始新一轮的定投
+            accountinfo.unit_balance = 0
+            accountinfo.unit_amount = 0
+            # 盈利的金额为正,亏损的为负,只有卖出时才把盈利的金额更新上去
+            accountinfo.total_profit = -1*(accountinfo.total_profit + accountinfo.unit_amount + trans_amount)
+
         # 评估金额更新
         accountinfo.esti_unit_amount = accountinfo.unit_balance*newtrans.trans_price
         accountinfo.esti_profit_rate = round(accountinfo.esti_unit_amount/accountinfo.unit_amount - 1,3)
@@ -460,7 +478,10 @@ def update_invest_estivalue(coin_pair, priceitem):
     accountinfo = query.filter_by(coin_pair=coin_pair).first()
     # 评估金额更新
     accountinfo.esti_unit_amount = accountinfo.unit_balance * priceitem.sell_price
-    accountinfo.esti_profit_rate = round(accountinfo.esti_unit_amount / accountinfo.unit_amount - 1, 3)
+    if accountinfo.unit_amount == 0:
+        accountinfo.esti_profit_rate = 0
+    else:
+        accountinfo.esti_profit_rate = round(accountinfo.esti_unit_amount / accountinfo.unit_amount - 1, 3)
     session.commit()
 
     pass

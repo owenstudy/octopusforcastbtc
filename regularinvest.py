@@ -90,19 +90,21 @@ class RegularInvest(object):
         total_unit_balance = regular_summary.get('unit_balance')
         total_invest_amount = regular_summary.get('unit_amount')
         actual_amount = regular_summary.get('unit_balance')*currpriceitem.sell_price
-        # 达到止盈的比例则执行卖出
-        if actual_amount/total_invest_amount - 1 >= self.__sell_profit_rate:
-            self.coin_trans(self.__market, const.TRANS_TYPE_SELL, currpriceitem.sell_price, currpriceitem)
-        # 止损检查
-        elif actual_amount/total_invest_amount - 1 <= self.__stop_lost_rate*-1:
-            # 临时把每次的交易金额设置为卖出的总金额
-            # origi_trans_amount_per_trans = self.__trans_amount_per_trans
-            # self.__trans_amount_per_trans = actual_amount
-            # 把所有的买入都卖出
-            self.coin_trans(self.__market, const.TRANS_TYPE_SELL, currpriceitem.sell_price, currpriceitem)
-            # 恢复买入的默认买入金额
-            # self.__trans_amount_per_trans = origi_trans_amount_per_trans
-            pass
+        # 清空帐户后会出现金额为0的情况,需要排除检查
+        if total_invest_amount>0:
+            # 达到止盈的比例则执行卖出
+            if actual_amount/total_invest_amount - 1 >= self.__sell_profit_rate:
+                self.coin_trans(self.__market, const.TRANS_TYPE_SELL, currpriceitem.sell_price, currpriceitem)
+            # 止损检查
+            elif actual_amount/total_invest_amount - 1 <= self.__stop_lost_rate*-1:
+                # 临时把每次的交易金额设置为卖出的总金额
+                # origi_trans_amount_per_trans = self.__trans_amount_per_trans
+                # self.__trans_amount_per_trans = actual_amount
+                # 把所有的买入都卖出
+                self.coin_trans(self.__market, const.TRANS_TYPE_SELL, currpriceitem.sell_price, currpriceitem)
+                # 恢复买入的默认买入金额
+                # self.__trans_amount_per_trans = origi_trans_amount_per_trans
+                pass
         # 更新帐户的估值信息
         if currpriceitem is not None:
             ormmysql.update_invest_estivalue(coin_pair, currpriceitem)
@@ -175,6 +177,7 @@ class RegularInvest(object):
         if trans_type == const.TRANS_TYPE_BUY:
             orderitem = cointrans.OrderItem(market, coin_pair)
         elif trans_type == const.TRANS_TYPE_SELL:
+            orderitem = cointrans.OrderItem(market, coin_pair)
             # 取得当前可以卖出的总units
             account_summary = ormmysql.get_regular_invest_summary(coin_pair)
             total_units = account_summary.get('unit_balance')
@@ -188,7 +191,9 @@ class RegularInvest(object):
             bal = order_market.getMyBalance(coin)
             # 可能出现余额不足的情况
             if bal > trans_units:
-                trans_order = order_market.submitOrder(coin_pair, trans_type, trans_price_rounding, trans_units)
+                pass
+                trans_order=common.JSONObject({'order_id':222222})
+                # trans_order = order_market.submitOrder(coin_pair, trans_type, trans_price_rounding, trans_units)
             # 处理第一次买入出现扣除手续费后卖出时余额不足的情况
             elif trans_units*0.99<bal:
                 newtrans_units = round(trans_units*0.99,rounding_unit)
