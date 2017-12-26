@@ -153,7 +153,7 @@ class RegularInvest(object):
         # 判断是不是满足交易的条件，不满足则退出不进行交易
         if trans_type == const.TRANS_TYPE_BUY:
             if self.check_trans_indi(coin_pair) is False:
-                print('{0}:不符合买入条件，可能是超过买入数量上限或者比例上限'.format(coin))
+                # print('{0}:不符合买入条件，可能是超过买入数量上限或者比例上限'.format(coin))
                 return False
 
         # 对价格和交易单位进行rounding，否则有可能造成调用接口失败
