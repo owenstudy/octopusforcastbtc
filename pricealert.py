@@ -209,6 +209,13 @@ class PriceAlert(object):
                                 self.coin_trans(market,coin_pair)
                             # 检查成交状态及进行止损检查
                             self.update_order_status(market, coin_pair)
+                            # 对交易进行初始化处理
+                            if self.cointrans_handler is None:
+                                self.cointrans_handler = cointrans.CoinTrans(market)
+                            elif self.cointrans_handler.market != market:
+                                self.cointrans_handler = cointrans.CoinTrans(market)
+                            # 对买入的订单进行加价卖出
+                            self.cointrans_handler.sell_check()
                         except Exception as e:
                             print('Call failed:{0}'.format(str(e)))
     '''从市场取得价格，返回一个价格明细'''
