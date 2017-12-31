@@ -169,7 +169,7 @@ def get_rounding_setting(market):
 
 # # 注意BCC的价格必须为0，否则会报错，BTC38的约定规则有问题
 rounding_price_setting =\
-{'lbtc': {'unit': 6, 'price': 4}, 'mec': {'unit': 6, 'price': 7}, 'xcn': {'unit': 6, 'price': 8}, 'blk': {'unit': 6, 'price': 7}, 'bnt': {'unit': 6, 'price': 6}, 'nxt': {'unit': 6, 'price': 6}, 'qash': {'unit': 6, 'price': 6}, 'eac': {'unit': 5, 'price': 0}, 'xpm': {'unit': 6, 'price': 7}, 'etc': {'unit': 8, 'price': 5}, 'lend': {'unit': 6, 'price': 8}, 'tag': {'unit': 6, 'price': 8}, 'qrk': {'unit': 6, 'price': 8}, 'xem': {'unit': 6, 'price': 7}, 'xzc': {'unit': 6, 'price': 5}, 'dash': {'unit': 6, 'price': 3}, 'bcc': {'unit': 6, 'price': 4}, 'xlm': {'unit': 6, 'price': 7}, 'mgc': {'unit': 6, 'price': 8}, 'tmc': {'unit': 6, 'price': 6}, 'ardr': {'unit': 6, 'price': 6}, 'ncs': {'unit': 6, 'price': 8}, 'bcx': {'unit': 7, 'price': 8}, 'zcc': {'unit': 6, 'price': 8}, 'sbtc': {'unit': 8, 'price': 4}, 'wdc': {'unit': 6, 'price': 8}, 'vash': {'unit': 6, 'price': 8}, 'hlb': {'unit': 6, 'price': 8}, 'ltc': {'unit': 6, 'price': 5}, 'eth': {'unit': 7, 'price': 4}, 'dat': {'unit': 6, 'price': 8}, 'knc': {'unit': 6, 'price': 6}, 'bite': {'unit': 6, 'price': 6}, 'ae': {'unit': 6, 'price': 6}, 'bts': {'unit': 6, 'price': 7}, 'doge': {'unit': 5, 'price': 8}, 'xrp': {'unit': 6, 'price': 7}, 'ric': {'unit': 8, 'price': 8}, 'sys': {'unit': 6, 'price': 7}, 'bcd': {'unit': 8, 'price': 5}, 'cvc': {'unit': 6, 'price': 7}, 'inf': {'unit': 6, 'price': 8}}
+{'xrp': {'unit': 6, 'price': 6}, 'bts': {'unit': 7, 'price': 7}, 'ae': {'unit': 6, 'price': 6}, 'inf': {'unit': 7, 'price': 8}, 'wdc': {'unit': 6, 'price': 8}, 'xzc': {'unit': 6, 'price': 4}, 'dash': {'unit': 6, 'price': 3}, 'sys': {'unit': 6, 'price': 7}, 'bcc': {'unit': 6, 'price': 3}, 'ltc': {'unit': 6, 'price': 4}, 'xcn': {'unit': 6, 'price': 8}, 'vash': {'unit': 5, 'price': 8}, 'xpm': {'unit': 8, 'price': 7}, 'knc': {'unit': 6, 'price': 6}, 'tag': {'unit': 7, 'price': 7}, 'bite': {'unit': 6, 'price': 5}, 'mgc': {'unit': 7, 'price': 8}, 'qash': {'unit': 6, 'price': 6}, 'qrk': {'unit': 6, 'price': 8}, 'lend': {'unit': 6, 'price': 8}, 'xem': {'unit': 6, 'price': 6}, 'doge': {'unit': 6, 'price': 8}, 'eac': {'unit': 4, 'price': 0}, 'etc': {'unit': 6, 'price': 5}, 'mec': {'unit': 6, 'price': 7}, 'bnt': {'unit': 6, 'price': 6}, 'cvc': {'unit': 6, 'price': 6}, 'eth': {'unit': 6, 'price': 4}, 'zcc': {'unit': 6, 'price': 8}, 'tmc': {'unit': 5, 'price': 6}, 'ardr': {'unit': 6, 'price': 6}, 'lbtc': {'unit': 6, 'price': 4}, 'bcx': {'unit': 5, 'price': 8}, 'sbtc': {'unit': 8, 'price': 4}, 'hlb': {'unit': 6, 'price': 8}, 'god': {'unit': 6, 'price': 4}, 'dat': {'unit': 6, 'price': 8}, 'bcd': {'unit': 6, 'price': 5}, 'blk': {'unit': 6, 'price': 7}, 'ric': {'unit': 6, 'price': 8}, 'ncs': {'unit': 5, 'price': 8}, 'xlm': {'unit': 6, 'price': 7}, 'nxt': {'unit': 6, 'price': 6}}
 # btc价格额外的rounding规则
 rounding_price_setting['btc']={'unit':6, 'price':0}
 # 价格rounding规则
@@ -189,8 +189,8 @@ def rounding_unit(coin):
 
 if __name__ == '__main__':
     get_db_string()
-    x=get_monitor_coin_list()
-    print(x)
+    # x=get_monitor_coin_list()
+    # print(x)
     roundingdata = get_rounding_setting('btc38')
     print('rounddata:{0}'.format(roundingdata))
     x = rounding_price('bcc')
