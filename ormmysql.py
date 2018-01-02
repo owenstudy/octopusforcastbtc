@@ -468,7 +468,10 @@ def save_regular_invest(orderitem=None):
 
         # 评估金额更新
         accountinfo.esti_unit_amount = accountinfo.unit_balance*newtrans.trans_price
-        accountinfo.esti_profit_rate = round(accountinfo.esti_unit_amount/accountinfo.unit_amount - 1,3)
+        if accountinfo.unit_amount == 0:
+            accountinfo.esti_profit_rate=0
+        else:
+            accountinfo.esti_profit_rate = round(accountinfo.esti_unit_amount/accountinfo.unit_amount - 1,3)
         session.commit()
         # 把所有的买入记录清空,保存到log表中
         # TODO
