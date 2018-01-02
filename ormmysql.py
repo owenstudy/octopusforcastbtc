@@ -453,15 +453,15 @@ def save_regular_invest(orderitem=None):
         # 把本次交易的金额汇总到总表中
         query = session.query(MapperRegularInvestSummary)
         accountinfo = query.filter_by(coin_pair=coin_pair).first()
-        accountinfo.unit_balance = accountinfo.unit_balance+trans_units
-        accountinfo.unit_amount = accountinfo.unit_amount+trans_amount
         # 累积的金额更新
         if newtrans.trans_type == 'buy':
             accountinfo.total_units = accountinfo.total_units + trans_units
             accountinfo.total_amount = accountinfo.total_amount + trans_amount
+            accountinfo.unit_balance = accountinfo.unit_balance + trans_units
+            accountinfo.unit_amount = accountinfo.unit_amount + trans_amount
         else:
             # 盈利的金额为正,亏损的为负,只有卖出时才把盈利的金额更新上去
-            accountinfo.total_profit = -1*(accountinfo.total_profit + accountinfo.unit_amount + trans_amount)
+            accountinfo.total_profit = accountinfo.total_profit + -1*(accountinfo.unit_amount + trans_amount)
             # 卖出后对当前的金额进行清空操作,都设置为0,重新开始新一轮的定投
             accountinfo.unit_balance = 0
             accountinfo.unit_amount = 0
