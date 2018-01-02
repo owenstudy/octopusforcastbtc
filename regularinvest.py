@@ -192,8 +192,8 @@ class RegularInvest(object):
             # 可能出现余额不足的情况
             if bal > trans_units:
                 pass
-                trans_order=common.JSONObject({'order_id':222222})
-                # trans_order = order_market.submitOrder(coin_pair, trans_type, trans_price_rounding, trans_units)
+                # trans_order=common.JSONObject({'order_id':222222})
+                trans_order = order_market.submitOrder(coin_pair, trans_type, trans_price_rounding, trans_units)
             # 处理第一次买入出现扣除手续费后卖出时余额不足的情况
             elif trans_units*0.99<bal:
                 newtrans_units = round(trans_units*0.99,rounding_unit)
