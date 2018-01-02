@@ -56,6 +56,26 @@ def get_monitor_coin_list():
     coinlist = coinliststr.split(',')
     return coinlist
 
+# 获取全部的coin列表
+def get_all_coin_pair_list():
+    baseurl = config.apiconfig.get('baseurl')
+    mk_type=['btc','bitcny','bitusd']
+    market_coin_list = ''
+    market = 'btc38'
+    for mk_type in mk_type:
+        pricedata = urlaccess.get_content(baseurl+'/ticker.php?c=all&mk_type={0}'.format(mk_type))
+        # 返回的字节转换成字符串
+        price = pricedata.decode('utf8')
+        pricejson= json.loads(price)
+        for coin in pricejson:
+            market_coin_list = market_coin_list + (coin+'_'+mk_type)+','
+        # 去除最后一个逗号
+    market_coin_list = market_coin_list[0:len(market_coin_list)-1]
+    wex_coin_list = 'ltc_btc,tmc_btc,eth_btc,bcx_btc,bcc_btc,xrp_btc,bcx_btc,sbtc_btc,dash_btc,nxt_btc,inf_btc'
+    result = {'{0}'.format(market):market_coin_list,'wex':wex_coin_list}
+    return result
+    pass
+
 # 每次交易的金额， RMB
 TRANS_AMOUNT_PER_ORDER = 2
 # 最大的交易池，即同时存在的最大OPEN订单数量
@@ -189,6 +209,7 @@ def rounding_unit(coin):
 
 if __name__ == '__main__':
     get_db_string()
+    get_all_coin_pair_list()
     # x=get_monitor_coin_list()
     # print(x)
     roundingdata = get_rounding_setting('btc38')

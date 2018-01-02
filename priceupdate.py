@@ -42,9 +42,10 @@ class PriceItem(object):
         self.price_buy_forecast_verify_date=None
     '''打印显示对象的内容'''
     def __str__(self):
-        priceinfo='|%s|%s|%s|%s|%s|%s|%s|%s|%s'%(common.CommonFunction.get_curr_time().rjust(25),self.coin.rjust(6),\
+        mk_type=self.coin_pair.split('_')[1]
+        priceinfo='|%s|%s|%s|%s|%s|%s|%s|%s|%s|%s'%(common.CommonFunction.get_curr_time().rjust(25),self.coin.rjust(8),\
                 str(self.buy_price).rjust(10),str(self.buy_depth).rjust(20),str(self.sell_price).rjust(10),\
-                str(self.sell_depth).rjust(20),str(self.price_buy_index).rjust(4),\
+                str(self.sell_depth).rjust(20),mk_type.rjust(6),str(self.price_buy_index).rjust(4),\
                 str(self.price_buy_forecast).rjust(8),str(self.price_buy_forecast_verify).rjust(12))
         return priceinfo
 
