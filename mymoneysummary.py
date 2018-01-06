@@ -51,7 +51,11 @@ def gen_money_summary():
                     # 转换成RMB的价格
                     total_bal_cny = total_bal_cny + coinbal_btc * btcprice_cny
             except Exception as e:
-                print('{0} price error'.format(coin))
+                # 不再支持交易的coin
+                if coin == 'ybc' or coin == 'nss':
+                    pass
+                else:
+                    print('{0} price error'.format(coin))
     total_bal_cny = round(total_bal_cny,2)
     print('{0}: balance_cny: {1}'.format(mybaldate,total_bal_cny))
     # 保存结果到文件
