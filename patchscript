@@ -1,3 +1,23 @@
+# patch regular investment wrongly sell but actually did not sell
+
+    update t_regular_invest_summary  a set unit_balance=
+    (select sum(trans_units)from
+        t_regular_invest_dtl b where a.account_id=b.account_id and trans_type='buy')
+        where a.account_id=9;
+    update t_regular_invest_summary  a set unit_amount=
+    (select sum(trans_amount)from
+        t_regular_invest_dtl b where a.account_id=b.account_id and trans_type='buy')
+        where a.account_id=9;
+    update t_regular_invest_summary set total_amount=unit_amount, total_units=unit_balance, total_profit=0
+      where account_id=9;
+
+    update t_regular_invest_summary set unit_balance=total_units-274.3832092285, unit_amount=unit_amount-0.0014240489
+      where account_id=9;
+
+delete from t_regular_invest_dtl where account_id=9 and trans_type='sell';
+
+update
+
 # patch sell order due to rounding issues
 
 #select coin,count(*) from t_coin_trans where coin in ('eth', 'tmc', 'etc', 'xlm', 'ardr', 'mgc', 'xzc', 'wdc', 'qrk', 'blk', 'ncs') group by coin;

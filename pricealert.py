@@ -206,7 +206,9 @@ class PriceAlert(object):
                             buy_flag = self.match_alert_percent(coin_pair)
                             # 达到警示价格的进行持续买入操作
                             if buy_flag is True:
-                                self.coin_trans(market,coin_pair)
+                                pass
+                                # 目前测试半个月左右,没有能实现盈利,本方法优化不够,暂时停止执行,发现新的方法后再来测试
+                                # self.coin_trans(market,coin_pair)
                             # 检查成交状态及进行止损检查
                             self.update_order_status(market, coin_pair)
                             # 对交易进行初始化处理
