@@ -48,6 +48,9 @@ class OrderManage:
     def getMyTradeList(self,coin_code_pair):
         coin_code=coin_code_pair.split('_')[0]
         return self.clientapi.getMyTradeList(coin_code)
+    # 获取当前的市场价格
+    def getMarketPrice(self,coin_code_pair):
+        return self.clientapi.getPrice(coin_code_pair)
 
 #test
 if __name__=='__main__':

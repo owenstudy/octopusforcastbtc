@@ -186,8 +186,9 @@ class Client():
     # 取得价格信息
     def getPrice(self,coin_pair):
         price=self.btc38clt.getTickers(coin_pair.split('_')[1],coin_pair.split('_')[0])
-        priceobj = urlaccess.JSONObject(price)
-        return priceobj
+        return price
+        # priceobj = urlaccess.JSONObject(price)
+        # return priceobj
     # 获取交易的历史记录
     def getMyTradeList(self,coin_code):
 

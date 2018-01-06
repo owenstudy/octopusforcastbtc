@@ -10,7 +10,7 @@
 # 定期投资的交易
 
 import config, ormmysql, common, datetime, pricealert, const, publicparameters
-import cointrans, ordermanage, time
+import cointrans, ordermanage, time, mymoneysummary
 '''根据参数定义,自动进行买入和卖出操作'''
 class RegularInvest(object):
     def __init__(self, market):
@@ -48,6 +48,8 @@ class RegularInvest(object):
         # 买入的标志
         buy_indi = self.regular_buy_indi(coin_pair)
         if buy_indi is True:
+            # 保存当前的帐户余额快照
+            mymoneysummary.gen_money_summary()
             pricealert_forecast = pricealert.PriceAlert(self.__market, self.__coin_list)
             # 当前的价格信息
             currpriceitem = pricealert_forecast.getpriceitem(self.__market, coin_pair)
