@@ -55,7 +55,7 @@ def gen_money_summary():
                 if coin == 'ybc' or coin == 'nss':
                     pass
                 else:
-                    print('{0} price error'.format(coin))
+                    print('{0} price error:{1}'.format(coin,str(e)))
     total_bal_cny = round(total_bal_cny,2)
     print('{0}: balance_cny: {1}'.format(mybaldate,total_bal_cny))
     # 保存结果到文件
