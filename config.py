@@ -1,5 +1,5 @@
-apiconfig={"key":"", "secret":"",
-     "accountid":, "baseurl":"http://api.aex.com/" }
+apiconfig={"key":"654aeb683fc25a4cb32672e760eba4fb", "secret":"",
+     "accountid":409225, "baseurl":"http://api.aex.com/" }
 # 基础的交易货币，可以是cny, btc,usd等
 base_currency = {"basecurrcode":"btc"}
 
@@ -11,7 +11,7 @@ trans_config = {"database": {"username":"coin", "password":"Windows2000", "ip":"
  }
 
 # wex api config
-wex_apiconfig = {"key":"", "secret":"",
+wex_apiconfig = {"key":"6KHTCFPV-R16YWHZ9-UC0VVNY7-1O1KVDMQ-2RW1CNSW", "secret":"",
      "accountid":409225, "baseurl":"http://api.aex.com/" }
 
 # 监控价格的coin list
@@ -22,4 +22,9 @@ sms_auth = {"apikey":"", "signature":"【水果尝尝鲜】"}
 
 # 固定投资策略
 # @buy_freq, 以多少小时为频率买一次,单位为小时
-regular_invest_param={"buy_freq":5, "buy_time":"10:00", "buy_amt":{'btc':0.0002,'bitcny':11}, 'buy_max_amt':{'btc':0.002,'bitcny':100}, "sell_profit_rate":0.15, "stop_lost_rate":0.3, "coin_list":"ltc_btc,eth_btc,bcx_btc,ltc_bitcny"}
+regular_invest_param={"buy_freq":5, "buy_time":"10:00",
+                      "buy_amt":{'btc':0.0002,'bitcny':11},
+                      'buy_max_amt':{'btc':0.002,'bitcny':100},
+                      "sell_profit_rate":{'bcx_btc':0.25,'lend_btc':0.3,'default':0.15},
+                      "stop_lost_rate":0.3,
+                      "coin_list":"ltc_btc,eth_btc,bcx_btc,ltc_bitcny,lend_btc,tmc_btc"}
