@@ -42,7 +42,11 @@ class RegularInvest(object):
         const.CANCEL_STATUS_FAIL= 'fail'
         # 市场的交易处理器
         self.order_market = ordermanage.OrderManage(market)
-
+    '''获取止盈比例'''
+    def get_sell_profit_rate(self,coin_pair):
+        default_sell_profit_rate = self.__regular_param.get('sell_profit_rate').get('default')
+        sell_profit_rate = self.__regular_param.get('sell_profit_rate').get(coin_pair, default_sell_profit_rate)
+        return sell_profit_rate
     '''自动买入操作'''
     def regular_buy(self, coin_pair):
         # 买入的标志
@@ -95,7 +99,8 @@ class RegularInvest(object):
         # 清空帐户后会出现金额为0的情况,需要排除检查
         if total_invest_amount>0:
             # 达到止盈的比例则执行卖出
-            if actual_amount/total_invest_amount - 1 >= self.__sell_profit_rate:
+            sell_profit_rate = self.get_sell_profit_rate(coin_pair)
+            if actual_amount/total_invest_amount - 1 >= sell_profit_rate:
                 self.coin_trans(self.__market, const.TRANS_TYPE_SELL, currpriceitem.sell_price, currpriceitem)
             # 止损检查
             elif actual_amount/total_invest_amount - 1 <= self.__stop_lost_rate*-1:
