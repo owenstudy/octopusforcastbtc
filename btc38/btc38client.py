@@ -118,16 +118,26 @@ class Client():
             open_order_list.append(open_order_item)
         return open_order_list
         pass
-    #得到某个order的状态
+    #得到某个order的状态,传入的参数可以 是coin_pair也可以是coin code, mk_type默认为btc
     def getOrderStatus(self,orderid,coin_code=None):
         except_times=0
         max_except_times=5
         return_order_status=None
+        coin = coin_code
+        # 处理传处的coin_pair值
+        if coin_code is not None:
+            if len(coin_code.split('_')) == 2:
+                coin = coin_code.split('_')[0]
+                mk_type = coin_code.split('_')[1]
+            else:
+                mk_type = base_currency.get('basecurrcode')
+        else:
+            mk_type = base_currency.get('basecurrcode')
         # If there is exception then continue to redo so that we can get correct order status
         while(except_times<max_except_times and return_order_status==None):
             try:
                 time.sleep(1)
-                data = self.btc38clt.getOrderList(coin_code,base_currency.get('basecurrcode'))
+                data = self.btc38clt.getOrderList(coin, mk_type)
                 for order in data:
                     # 查找到有订单则说明没有 成交，是open状态，其它为closed，cancel也认为是closed
                     if int(order.get('id')) == int(orderid):
@@ -216,10 +226,10 @@ if __name__=='__main__':
     depth = client.getMarketDepth('dash','btc')
     # trade_list = client.getMyTradeList('bcc')
     # print("My trade list:{0}".format(trade_list))
-    submit=client.submitOrder('doge_btc','buy',0.00000011,1000)
+    submit=client.submitOrder('snt_bitcny','buy',0.01,1000)
 #     #print(submit.order_id)
-#     #clt = client.getOrderStatus(367892140)
-#     #print(clt)
+    clt = client.getOrderStatus(submit.order_id,'snt_bitcny')
+    #print(clt)
 #         #test open order list
     open_order_list=client.getOpenOrderList('bcc_btc')
 #     for order in open_order_list:

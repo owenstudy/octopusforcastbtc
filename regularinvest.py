@@ -16,21 +16,23 @@ class RegularInvest(object):
     def __init__(self, market):
         self.__market = market
         # 定期投资的相关参数
-        self.__regular_param = config.regular_invest_param
+        # self.__regular_param = config.regular_invest_param
+        # self.__regular_param2 = config.regular_invest_param2
         # 每次买入的金额
-        self.__trans_amount_per_trans = self.__regular_param.get('buy_amt')
+        # self.__trans_amount_per_trans = self.__regular_param.get('buy_amt')
         # 每次买入的时间
-        self.__buy_time = self.__regular_param.get('buy_time')
+        # self.__buy_time = self.__regular_param.get('buy_time')
         # 买入的频率,以小时为单位
-        self.__buy_freq = self.__regular_param.get('buy_freq')
+        # self.__buy_freq = self.__regular_param.get('buy_freq')
         # 一个COIN的总共投资上限
-        self.__buy_max_amt = self.__regular_param.get('buy_max_amt')
+        # self.__buy_max_amt = self.__regular_param.get('buy_max_amt')
         # 止盈比例
-        self.__sell_profit_rate = self.__regular_param.get('sell_profit_rate')
+        # self.__sell_profit_rate = self.__regular_param.get('sell_profit_rate')
         # 止损比例
-        self.__stop_lost_rate = self.__regular_param.get('stop_lost_rate')
+        # self.__stop_lost_rate = self.__regular_param.get('stop_lost_rate')
         # 操作的coin list
-        self.__coin_list = self.__regular_param.get('coin_list').split(',')
+        # self.__coin_list = self.__regular_param.get('coin_list').split(',')
+        self.__coin_list = self.get_coinfig_coinlist()
         # 订单状态
         const.ORDER_STATUS_OPEN = 'open'
         const.ORDER_STATUS_CLOSED = 'closed'
@@ -42,11 +44,35 @@ class RegularInvest(object):
         const.CANCEL_STATUS_FAIL= 'fail'
         # 市场的交易处理器
         self.order_market = ordermanage.OrderManage(market)
-    '''获取止盈比例'''
-    def get_sell_profit_rate(self,coin_pair):
-        default_sell_profit_rate = self.__regular_param.get('sell_profit_rate').get('default')
-        sell_profit_rate = self.__regular_param.get('sell_profit_rate').get(coin_pair, default_sell_profit_rate)
-        return sell_profit_rate
+    '''获取配置参数'''
+    def get_config_data(self, coin_pair, parameter_name):
+        # 配置参数
+        regular_param_coin = config.regular_invest_param.get(coin_pair,None)
+        regular_param = config.regular_invest_param
+        # 没有自定义参数,获取默认参数
+        mk_type = coin_pair.split('_')[1]
+        if regular_param_coin is None and mk_type == 'btc':
+            regular_param_coin = regular_param.get('default_btc', None)
+        elif regular_param_coin is None and mk_type == 'bitcny':
+            regular_param_coin = regular_param.get('default_bitcny', None)
+        elif regular_param_coin is None and mk_type == 'bitusd':
+            regular_param_coin = regular_param.get('default_bitusd', None)
+        # 解析配置参数
+        try:
+            result = regular_param_coin.get(parameter_name)
+            if result is None:
+                print('找不到参数{0}:{1}'.format(coin_pair,parameter_name))
+        except Exception as e:
+            result = None
+            print('解析配置参数异常[{0}]:{1}'.format(parameter_name,str(e)))
+        return result
+        pass
+    '''获取参数配置的coinlist'''
+    def get_coinfig_coinlist(self):
+        result = config.regular_invest_param.get('coin_list').split(',')
+        if result is None:
+            result = []
+        return result
     '''自动买入操作'''
     def regular_buy(self, coin_pair):
         # 买入的标志
@@ -73,7 +99,9 @@ class RegularInvest(object):
         result = False
         if last_trans_date is not None:
             # 根据参数计算下一次要操作的时间
-            next_trans_date = last_trans_date + datetime.timedelta(seconds=self.__buy_freq*3600)
+            buy_freq = self.get_config_data(coin_pair,'buy_freq')
+            # next_trans_date = last_trans_date + datetime.timedelta(seconds=self.__buy_freq*3600)
+            next_trans_date = last_trans_date + datetime.timedelta(seconds=buy_freq*3600)
             currdate = datetime.datetime.now()
             if currdate > next_trans_date:
                 # 符合买入条件
@@ -99,11 +127,12 @@ class RegularInvest(object):
         # 清空帐户后会出现金额为0的情况,需要排除检查
         if total_invest_amount>0:
             # 达到止盈的比例则执行卖出
-            sell_profit_rate = self.get_sell_profit_rate(coin_pair)
+            sell_profit_rate = self.get_config_data(coin_pair,'sell_profit_rate')
+            # 止损检查
+            stop_lost_rate = self.get_config_data(coin_pair, 'stop_lost_rate')
             if actual_amount/total_invest_amount - 1 >= sell_profit_rate:
                 self.coin_trans(self.__market, const.TRANS_TYPE_SELL, currpriceitem.sell_price, currpriceitem)
-            # 止损检查
-            elif actual_amount/total_invest_amount - 1 <= self.__stop_lost_rate*-1:
+            elif actual_amount/total_invest_amount - 1 <= stop_lost_rate*-1:
                 # 临时把每次的交易金额设置为卖出的总金额
                 # origi_trans_amount_per_trans = self.__trans_amount_per_trans
                 # self.__trans_amount_per_trans = actual_amount
@@ -126,7 +155,7 @@ class RegularInvest(object):
                     self.regular_buy(coin_pair)
                     self.sell_check(coin_pair)
                     # 每10秒执行一次检查操作
-                    time.sleep(10)
+                    time.sleep(1)
                     pass
                 except Exception as e:
                     print('处理:{0}时发生错误:{1}'.format(coin_pair,str(e)))
@@ -140,7 +169,8 @@ class RegularInvest(object):
         total_unit_amount = regular_summary.get('unit_amount')
         mk_type = coin_pair.split('_')[1]
         # 不同币种有不同的最大值
-        buy_max_amt = self.__regular_param.get('buy_max_amt').get(mk_type)
+        # buy_max_amt = self.__regular_param.get('buy_max_amt').get(mk_type)
+        buy_max_amt = self.get_config_data(coin_pair,'buy_max_amt')
 
         if total_unit_amount >= buy_max_amt:
             return False
@@ -171,7 +201,8 @@ class RegularInvest(object):
         # 交易UNITS
         mk_type = coin_pair.split('_')[1]
         # 不同的基础货币有不同的买入金额
-        trans_amount_per_trans = self.__regular_param.get('buy_amt').get(mk_type)
+        # trans_amount_per_trans = self.__regular_param.get('buy_amt').get(mk_type)
+        trans_amount_per_trans = self.get_config_data(coin_pair,'buy_amt')
         trans_units = round(trans_amount_per_trans / buy_price, rounding_unit)
         # 第一次交易卖出时的UNIT和买入UNIT会有一个0.5%的误差
         newtrans_units = trans_units
@@ -221,7 +252,7 @@ class RegularInvest(object):
             order_status = 'fail'
             return False
         else:
-            order_status = order_market.getOrderStatus(order_id, coin)
+            order_status = order_market.getOrderStatus(order_id, coin_pair)
             # 如果状态为None，说明取状态有异常，对于卖出默认为OPEN，防止出现多现卖出状态设置为None，继续卖出的情况
             if order_status is None:
                 order_status = const.ORDER_STATUS_OPEN
@@ -265,6 +296,8 @@ class RegularInvest(object):
 
 if __name__ == '__main__':
     regularinvest = RegularInvest('btc38')
+    # coinlist = regularinvest.get_coinfig_coinlist()
+    # configdata = regularinvest.get_config_data('tmc_bitusd','buy_amt')
     regularinvest.run_regular_invest()
     # regularinvest.sell_check('ltc_btc')
     # regularinvest.regular_buy('ltc_btc')
