@@ -226,19 +226,21 @@ if __name__=='__main__':
     depth = client.getMarketDepth('dash','btc')
     # trade_list = client.getMyTradeList('bcc')
     # print("My trade list:{0}".format(trade_list))
-    submit=client.submitOrder('snt_bitcny','buy',0.01,1000)
+    # submit=client.submitOrder('snt_bitcny','buy',0.01,1000)
 #     #print(submit.order_id)
-    clt = client.getOrderStatus(submit.order_id,'snt_bitcny')
+#     clt = client.getOrderStatus(submit.order_id,'snt_bitcny')
     #print(clt)
 #         #test open order list
-    open_order_list=client.getOpenOrderList('bcc_btc')
+#     open_order_list=client.getOpenOrderList('bcc_btc')
 #     for order in open_order_list:
 #         print('order_id:%s,trans_type:%s,trans_unit:%f'%(order.order_id,order.trans_type,float(order.trans_unit)))
 #
 #
 #     btc38clt=Client()
 #     """
-#     bal=btc38clt.getMyBalance('doge')
+    bal=client.getMyBalance('doge')
+    print(bal)
+    pass
 #     print(bal)
 #     neworder=btc38clt.submitOrder('doge_cny','sell',0.03,2000)
 #     print(neworder)

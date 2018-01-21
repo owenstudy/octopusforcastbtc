@@ -196,7 +196,7 @@ class PriceAlert(object):
 
         while(True):
             self.one_round_price()
-            time.sleep(2)
+            time.sleep(60)
             run_times = run_times +1
             # 每运行10次检查一下是不是需要发通知
             if run_times%10 == 0:

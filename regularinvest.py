@@ -77,9 +77,9 @@ class RegularInvest(object):
     def regular_buy(self, coin_pair):
         # 买入的标志
         buy_indi = self.regular_buy_indi(coin_pair)
+        # 保存当前的帐户余额快照
+        mymoneysummary.gen_money_summary()
         if buy_indi is True:
-            # 保存当前的帐户余额快照
-            mymoneysummary.gen_money_summary()
             pricealert_forecast = pricealert.PriceAlert(self.__market, self.__coin_list)
             # 当前的价格信息
             currpriceitem = pricealert_forecast.getpriceitem(self.__market, coin_pair)
@@ -155,7 +155,7 @@ class RegularInvest(object):
                     self.regular_buy(coin_pair)
                     self.sell_check(coin_pair)
                     # 每10秒执行一次检查操作
-                    time.sleep(1)
+                    time.sleep(60)
                     pass
                 except Exception as e:
                     print('处理:{0}时发生错误:{1}'.format(coin_pair,str(e)))

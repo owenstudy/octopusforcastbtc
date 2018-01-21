@@ -138,7 +138,7 @@ class CoinTrans(object):
                 rounding_num_unit = publicparameters.rounding_unit(curroderitem.coin)
                 rounding_num_price = publicparameters.rounding_price(curroderitem.coin)
                 default_sell_price = round(curroderitem.buy_price*(1+publicparameters.SELL_PROFIT_RATE),rounding_num_price)
-                trans_status = self.coin_trans(self.market, 'sell', default_sell_price, curroderitem.priceitem)
+                # trans_status = self.coin_trans(self.market, 'sell', default_sell_price, curroderitem.priceitem)
                 # if newpriceitem.buy_price >= curroderitem.buy_price*(1+publicparameters.SELL_PROFIT_RATE):
                 #     # 执行实际的卖出操作
                 #     trans_status = self.coin_trans(self.market, 'sell', newpriceitem.buy_price, curroderitem.priceitem)
