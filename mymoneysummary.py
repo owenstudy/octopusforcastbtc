@@ -21,7 +21,7 @@ def gen_money_summary():
     # 计算当前时间的评估价格
     currallprice_btc = order_market.getMarketPrice('all_btc')
     currallprice_cny = order_market.getMarketPrice('all_bitcny')
-    currallprice_usd = order_market.getMarketPrice('all_bitusd')
+    currallprice_usd = order_market.getMarketPrice('all_usdt')
 
     total_bal_cny = 0
     # RMB价格
@@ -35,7 +35,7 @@ def gen_money_summary():
         if coin == 'bitcny':
             total_bal_cny = total_bal_cny + coinbal
             pass
-        elif coin == 'bitusd':
+        elif coin == 'usdt':
             # 把USD转换成btc后再转换成cny来计算
             total_bal_cny = total_bal_cny + coinbal/btcprice_usd*btcprice_cny
             pass
@@ -44,7 +44,12 @@ def gen_money_summary():
         else:
             # btc定价的价格
             try:
-                coinprice_btc = currallprice_btc.get(coin).get('ticker').get('buy')
+                if currallprice_btc.get(coin) is not None:
+                    coinprice_btc = currallprice_btc.get(coin).get('ticker').get('buy')
+                else:
+                    # 对于没有btc定价的币种则用bitcny来查找计算余额
+                    coinprice_cny = order_market.getMarketPrice(coin+'_bitcny').get('ticker').get('buy')
+                    total_bal_cny = total_bal_cny + coinbal * coinprice_cny
                 if coinprice_btc is not None:
                     # 转换成btc的数量
                     coinbal_btc = coinbal * coinprice_btc
