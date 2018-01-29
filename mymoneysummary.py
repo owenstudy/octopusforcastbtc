@@ -46,15 +46,14 @@ def gen_money_summary():
             try:
                 if currallprice_btc.get(coin) is not None:
                     coinprice_btc = currallprice_btc.get(coin).get('ticker').get('buy')
-                else:
-                    # 对于没有btc定价的币种则用bitcny来查找计算余额
-                    coinprice_cny = order_market.getMarketPrice(coin+'_bitcny').get('ticker').get('buy')
-                    total_bal_cny = total_bal_cny + coinbal * coinprice_cny
-                if coinprice_btc is not None:
                     # 转换成btc的数量
                     coinbal_btc = coinbal * coinprice_btc
                     # 转换成RMB的价格
                     total_bal_cny = total_bal_cny + coinbal_btc * btcprice_cny
+                else:
+                    # 对于没有btc定价的币种则用bitcny来查找计算余额
+                    coinprice_cny = order_market.getMarketPrice(coin+'_bitcny').get('ticker').get('buy')
+                    total_bal_cny = total_bal_cny + coinbal * coinprice_cny
             except Exception as e:
                 # 不再支持交易的coin
                 if coin == 'ybc' or coin == 'nss':

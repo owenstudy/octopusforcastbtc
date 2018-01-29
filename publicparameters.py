@@ -59,7 +59,7 @@ def get_monitor_coin_list():
 # 获取全部的coin列表
 def get_all_coin_pair_list():
     baseurl = config.apiconfig.get('baseurl')
-    mk_type=['btc','bitcny','bitusd']
+    mk_type=['btc','bitcny','usdt']
     market_coin_list = ''
     market = 'btc38'
     for mk_type in mk_type:
